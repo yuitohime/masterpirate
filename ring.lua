@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V10 - ULTIMATE (ORIGINAL UI + SMART HAKI/KEN VIRTUAL KEY + FLY FIX)
+-- DELTA UI V10 - ULTIMATE (ORIGINAL UI + SMART HAKI/KEN + SEA EVENT + MULTI WEAPON)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -39,13 +39,25 @@ local IslandList = {
 }
 
 local _G_V10 = {
+    -- Auto Farm
     AutoFarmFree = false, FarmAll = false, SelectedMonsters = {}, ExcludedMobs = {"dummy", "test dmg", "testdmg"},
     AutoFarmLevel = false, ManualQuestFarm = false, SelectedManualQuest = nil, CurrentTargetMob = nil,
     AutoEquip = false, AutoClick = false, AutoSkill = false, AutoRepeatQuest = false,
+    
+    -- Combat & Skills
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
     AutoHaki = false, AutoKen = false,
     SelectedWeapon = nil, SelectedFruit = nil,
     AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
+    
+    -- Swap Weapon Feature
+    SelectedSwapWeapons = {}, AutoSwapWeapon = false, SwapWeaponDelay = 1,
+    
+    -- Sea Event System
+    AutoSea = false, HuntSeaMonster = true, HuntGhost = true, AutoSitBoat = true, 
+    SeaZone = Vector3.new(-15610, 39, 37071), IsFightingSea = false, ArrivedAtZone = false,
+
+    -- Player & Misc
     SelectedIsland = nil, SelectedSpawnPoint = nil,
     EnableSpeed = false, WalkSpeed = 50, EnableJump = false, JumpPower = 100, InfJump = false, DashNoCD = false,
     FreeFly = false, FreeFlySpeed = 50,
@@ -142,7 +154,7 @@ CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
 local TabsFrame = Instance.new("ScrollingFrame", MainFrame)
 TabsFrame.Name = "TabsFrame"; TabsFrame.Size = UDim2.new(0.28, 0, 1, -35); TabsFrame.Position = UDim2.new(0, 0, 0, 35)
-TabsFrame.BackgroundTransparency = 1; TabsFrame.ScrollBarThickness = 2; TabsFrame.CanvasSize = UDim2.new(0, 0, 0, 450)
+TabsFrame.BackgroundTransparency = 1; TabsFrame.ScrollBarThickness = 2; TabsFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
 Instance.new("UIListLayout", TabsFrame).Padding = UDim.new(0, 5)
 Instance.new("UIPadding", TabsFrame).PaddingTop = UDim.new(0, 10)
 
@@ -180,7 +192,7 @@ local function CreateTab(name)
     return Page
 end
 
-local function CreateToggleSwitch(parent, text, varName)
+local function CreateToggleSwitch(parent, text, varName, callback)
     local Frame = Instance.new("Frame", parent)
     Frame.Size = UDim2.new(1, 0, 0, 40); Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
     Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
@@ -206,6 +218,7 @@ local function CreateToggleSwitch(parent, text, varName)
             SwitchBG.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
             Knob:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
         end
+        if callback then callback(_G_V10[varName]) end
     end)
 end
 
@@ -298,6 +311,7 @@ end
 -- ==========================================
 local TabAutoLevel = CreateTab("🌟 Farm Level")
 local TabFreeFarm = CreateTab("⚔️ Farm Tùy Chọn")
+local TabSeaEvent = CreateTab("🌊 Sự Kiện Biển")
 local TabIsland = CreateTab("🏝️ Đảo & Bay")
 local TabPlayer = CreateTab("🏃 Nhân Vật")
 local TabSettings = CreateTab("⚙️ Cài Đặt Chung")
@@ -335,6 +349,16 @@ CreateButton(TabFreeFarm, "🔍 Quét Quái (Toàn bộ Map)", function()
 end)
 CreateToggleSwitch(TabFreeFarm, "Bật Free Farm (Quái đã chọn)", "AutoFarmFree")
 CreateToggleSwitch(TabFreeFarm, "Bật Farm ALL (Càn quét Map)", "FarmAll")
+
+-- --- TAB: SEA EVENT ---
+local LblSeaInfo = Instance.new("TextLabel", TabSeaEvent)
+LblSeaInfo.Size = UDim2.new(1, 0, 0, 20); LblSeaInfo.BackgroundTransparency = 1; LblSeaInfo.TextColor3 = Color3.fromRGB(0, 255, 200)
+LblSeaInfo.Font = Enum.Font.Gotham; LblSeaInfo.TextSize = 13; LblSeaInfo.TextXAlignment = Enum.TextXAlignment.Left; LblSeaInfo.Text = "Trạng thái Biển: Đang rảnh..."
+
+CreateToggleSwitch(TabSeaEvent, "Bật Auto Sea Event", "AutoSea")
+CreateToggleSwitch(TabSeaEvent, "Săn Sea Monster (Bay Vòng Tròn)", "HuntSeaMonster")
+CreateToggleSwitch(TabSeaEvent, "Săn Thuyền Ma (The Starving Ghost)", "HuntGhost")
+CreateToggleSwitch(TabSeaEvent, "Tự Động Ngồi Lái Thuyền", "AutoSitBoat")
 
 -- --- TAB: ĐẢO & BAY ---
 CreateDropdown(TabIsland, "Chọn Đảo (Island)", IslandList, "SelectedIsland", false)
@@ -393,14 +417,22 @@ CreateToggleSwitch(TabSettings, "Bật Lặp Lại Quest (Tự Nhận Remote Qu)
 CreateDropdown(TabSettings, "Kiểu Đánh", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
 CreateSlider(TabSettings, "Khoảng Cách Đánh", 5, 40, "AttackDistance")
 CreateSlider(TabSettings, "Tốc Độ Bay Chung", 100, 500, "FlySpeed")
-local DropWeapons = CreateDropdown(TabSettings, "Chọn Vũ Khí", {}, "SelectedWeapon", false)
-CreateButton(TabSettings, "🎒 Quét Vũ Khí", function()
+
+local DropWeapons = CreateDropdown(TabSettings, "Chọn Vũ Khí Cầm Cố Định", {}, "SelectedWeapon", false)
+CreateToggleSwitch(TabSettings, "Tự Động Cầm 1 Vũ Khí Cố Định", "AutoEquip")
+
+-- MULTI WEAPON SWAP
+local DropSwapWeapons = CreateDropdown(TabSettings, "Chọn Các Vũ Khí Để Đổi Liên Tục (Multi)", {}, "SelectedSwapWeapons", true)
+CreateToggleSwitch(TabSettings, "Bật Tự Động Đổi Vũ Khí (Auto Swap)", "AutoSwapWeapon")
+CreateSlider(TabSettings, "Delay Đổi Vũ Khí (Giây)", 1, 10, "SwapWeaponDelay")
+
+CreateButton(TabSettings, "🎒 Quét Vũ Khí (Làm Mới Danh Sách)", function()
     local weps = {}
     for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do if v:IsA("Tool") then table.insert(weps, v.Name) end end
     if LocalPlayer.Character then for _, v in pairs(LocalPlayer.Character:GetChildren()) do if v:IsA("Tool") and not table.find(weps, v.Name) then table.insert(weps, v.Name) end end end
     DropWeapons(weps)
+    DropSwapWeapons(weps)
 end)
-CreateToggleSwitch(TabSettings, "Tự Động Cầm Vũ Khí", "AutoEquip")
 
 -- --- TAB: SKILLS ---
 CreateToggleSwitch(TabSkills, "🔥 Bật Tự Động Haki (Thông Minh)", "AutoHaki")
@@ -611,7 +643,7 @@ RunService.RenderStepped:Connect(function()
         local hrp = char.HumanoidRootPart
         local hum = char.Humanoid
         
-        if _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll then
+        if _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll or (_G_V10.AutoSea and _G_V10.IsFightingSea) then
             for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         end
 
@@ -679,12 +711,32 @@ local function RepeatQuestRemote()
     end
 end
 
--- VÒNG LẶP AUTO FARM CHÍNH
+-- ==========================================
+-- VÒNG LẶP AUTO FARM CHÍNH & VŨ KHÍ
+-- ==========================================
+local swapWeaponTimer = 0
+local swapWeaponIndex = 1
+
 task.spawn(function()
     while task.wait() do
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
         local HRP = char.HumanoidRootPart
+
+        -- LOGIC AUTO ĐỔI VŨ KHÍ
+        if _G_V10.AutoSwapWeapon and #_G_V10.SelectedSwapWeapons > 0 then
+            if os.clock() - swapWeaponTimer >= _G_V10.SwapWeaponDelay then
+                swapWeaponTimer = os.clock()
+                swapWeaponIndex = swapWeaponIndex + 1
+                if swapWeaponIndex > #_G_V10.SelectedSwapWeapons then swapWeaponIndex = 1 end
+                local wpName = _G_V10.SelectedSwapWeapons[swapWeaponIndex]
+                local wp = LocalPlayer.Backpack:FindFirstChild(wpName)
+                if wp then char.Humanoid:EquipTool(wp) end
+            end
+        elseif _G_V10.AutoEquip and _G_V10.SelectedWeapon then
+            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SelectedWeapon)
+            if wp then char.Humanoid:EquipTool(wp) end
+        end
 
         _G_V10.CurrentTargetMob = nil
         if _G_V10.AutoFarmLevel then
@@ -697,13 +749,11 @@ task.spawn(function()
         else LblInfo.Text = "Đang rảnh rỗi..." end
 
         if _G_V10.AutoRepeatQuest then RepeatQuestRemote() end
-        if _G_V10.AutoEquip and _G_V10.SelectedWeapon then
-            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SelectedWeapon)
-            if wp then char.Humanoid:EquipTool(wp) end
-        end
 
-        local isFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll
-        if isFarming and not _G_V10.FreeFly then
+        local isNormalFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll
+        local isFarmingAction = isNormalFarming or (_G_V10.AutoSea and _G_V10.IsFightingSea)
+
+        if isFarmingAction and not _G_V10.FreeFly then
             if _G_V10.AutoClick then
                 local equippedTool = char:FindFirstChildWhichIsA("Tool")
                 if equippedTool then equippedTool:Activate() end
@@ -715,35 +765,170 @@ task.spawn(function()
             end
             
             EnableAntiFall(HRP)
-            local targetMobInstance, shortestDist = nil, math.huge
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
-                    local isValidTarget = false
-                    if _G_V10.FarmAll then
-                        local isEx = false
-                        for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
-                        if not isEx then isValidTarget = true end
-                    elseif _G_V10.CurrentTargetMob and table.find(_G_V10.CurrentTargetMob, v.Name) then
-                        isValidTarget = true
-                    end
-                    if isValidTarget then
-                        local dist = (HRP.Position - v.HumanoidRootPart.Position).Magnitude
-                        if dist < shortestDist then shortestDist = dist; targetMobInstance = v end
+            
+            -- CHỈ QUÉT MOB TRÊN ĐẢO NẾU KHÔNG PHẢI ĐANG ĐÁNH SEA EVENT
+            if isNormalFarming and not (_G_V10.AutoSea and _G_V10.IsFightingSea) then
+                local targetMobInstance, shortestDist = nil, math.huge
+                for _, v in pairs(workspace:GetDescendants()) do
+                    if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
+                        local isValidTarget = false
+                        if _G_V10.FarmAll then
+                            local isEx = false
+                            for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
+                            if not isEx then isValidTarget = true end
+                        elseif _G_V10.CurrentTargetMob and table.find(_G_V10.CurrentTargetMob, v.Name) then
+                            isValidTarget = true
+                        end
+                        if isValidTarget then
+                            local dist = (HRP.Position - v.HumanoidRootPart.Position).Magnitude
+                            if dist < shortestDist then shortestDist = dist; targetMobInstance = v end
+                        end
                     end
                 end
-            end
 
-            if targetMobInstance then
-                local mobPos = targetMobInstance.HumanoidRootPart.CFrame
-                local offset = CFrame.new(0, _G_V10.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
-                if _G_V10.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V10.AttackDistance)
-                elseif _G_V10.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V10.AttackDistance, 0) end
-                
-                if shortestDist > 200 then TweenToSafe(mobPos * offset)
-                else HRP.CFrame = mobPos * offset end
+                if targetMobInstance then
+                    local mobPos = targetMobInstance.HumanoidRootPart.CFrame
+                    local offset = CFrame.new(0, _G_V10.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
+                    if _G_V10.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V10.AttackDistance)
+                    elseif _G_V10.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V10.AttackDistance, 0) end
+                    
+                    if shortestDist > 200 then TweenToSafe(mobPos * offset)
+                    else HRP.CFrame = mobPos * offset end
+                end
             end
         else
             DisableAntiFall(HRP)
+        end
+    end
+end)
+
+-- ==========================================
+-- HỆ THỐNG SEA EVENT (ENGINE ĐỘC LẬP)
+-- ==========================================
+local function GetTargetSeaEvent()
+    local monsterFolder = workspace:FindFirstChild("Monster")
+    if not monsterFolder then return nil end
+    
+    for _, v in pairs(monsterFolder:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+            local isSeaMonster = (v.Name == "Sea Monster")
+            local isGhost = string.find(v.Name, "The Starving Ghost")
+            
+            -- Chỉ target nếu người dùng có bật loại quái đó lên
+            if (isSeaMonster and _G_V10.HuntSeaMonster) or (isGhost and _G_V10.HuntGhost) then
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+local wasAutoSeaOn = false
+
+task.spawn(function()
+    while task.wait() do 
+        if not _G_V10.AutoSea then 
+            if wasAutoSeaOn then
+                VIM:SendKeyEvent(false, Enum.KeyCode.W, false, game)
+                wasAutoSeaOn = false
+            end
+            LblSeaInfo.Text = "Trạng thái Biển: Đã tắt."
+            _G_V10.ArrivedAtZone = false
+            continue 
+        else
+            wasAutoSeaOn = true
+        end
+        
+        local char = LocalPlayer.Character
+        local HRP = char and char:FindFirstChild("HumanoidRootPart")
+        local Hum = char and char:FindFirstChild("Humanoid")
+        
+        if not char or not HRP or not Hum or Hum.Health <= 0 then continue end
+
+        local targetMonster = GetTargetSeaEvent()
+        local myBoatName = LocalPlayer.Name .. "Boat"
+        local boatFolder = workspace:FindFirstChild("Boats")
+        local myBoat = boatFolder and boatFolder:FindFirstChild(myBoatName)
+
+        -- TRẠNG THÁI 1: CÓ SỰ KIỆN XUẤT HIỆN
+        if targetMonster then
+            _G_V10.IsFightingSea = true
+            LblSeaInfo.Text = "Trạng thái Biển: Đang tiêu diệt " .. targetMonster.Name
+            
+            -- Dừng lái thuyền
+            VIM:SendKeyEvent(false, Enum.KeyCode.W, false, game)
+            if Hum.Sit then Hum.Sit = false end
+            
+            if targetMonster.Name == "Sea Monster" then
+                -- Bay vòng tròn né chiêu
+                local radius = 25
+                local speed = 2 
+                local angle = tick() * speed
+                local rootPos = targetMonster.HumanoidRootPart.Position
+                local targetPos = rootPos + Vector3.new(math.cos(angle) * radius, 20, math.sin(angle) * radius)
+                HRP.CFrame = CFrame.new(targetPos, rootPos)
+            else
+                -- Đứng trên đầu đánh Thuyền Ma
+                HRP.CFrame = targetMonster.HumanoidRootPart.CFrame * CFrame.new(0, 20, 0) * CFrame.Angles(math.rad(-90),0,0)
+            end
+
+        -- TRẠNG THÁI 2: KHÔNG CÓ SỰ KIỆN
+        else
+            if _G_V10.IsFightingSea then
+                _G_V10.IsFightingSea = false
+                VIM:SendKeyEvent(false, Enum.KeyCode.W, false, game)
+            end
+
+            if not myBoat then
+                _G_V10.ArrivedAtZone = false 
+                LblSeaInfo.Text = "Trạng thái Biển: Đang mua thuyền mới..."
+                
+                local npcFolder = workspace:FindFirstChild("NPC")
+                local spawner = npcFolder and npcFolder:FindFirstChild("BoatSpawner")
+                
+                if spawner and spawner:FindFirstChild("LowerTorso") then
+                    HRP.CFrame = spawner.LowerTorso.CFrame * CFrame.new(0, 0, 4)
+                    task.wait(0.5)
+                    pcall(function()
+                        game:GetService("ReplicatedStorage").Assets.Remote.RemoteFunction.Talking:InvokeServer(workspace.NPC.BoatSpawner, workspace.NPC.BoatSpawner, workspace.NPC.BoatSpawner)
+                    end)
+                    task.wait(1.5)
+                end
+            else
+                local seat = myBoat:FindFirstChild("VehicleSeat", true)
+                if seat then
+                    if not _G_V10.ArrivedAtZone then
+                        LblSeaInfo.Text = "Trạng thái Biển: Teleport thuyền ra biển 4 (1 Lần)..."
+                        
+                        if Hum.Sit then Hum.Sit = false; task.wait(0.2) end
+                        
+                        if myBoat:IsA("Model") and myBoat.PrimaryPart then
+                            myBoat:PivotTo(CFrame.new(_G_V10.SeaZone))
+                        else
+                            seat.CFrame = CFrame.new(_G_V10.SeaZone)
+                        end
+                        task.wait(0.3)
+                        
+                        if _G_V10.AutoSitBoat then
+                            HRP.CFrame = seat.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.1)
+                            seat:Sit(Hum)
+                        end
+                        _G_V10.ArrivedAtZone = true 
+                    else
+                        LblSeaInfo.Text = "Trạng thái Biển: Đang Auto Drive vô tận..."
+                        
+                        if _G_V10.AutoSitBoat and not Hum.Sit then
+                            HRP.CFrame = seat.CFrame
+                            task.wait(0.1)
+                            seat:Sit(Hum)
+                        end
+                        
+                        -- Luôn luôn đè phím W chạy thẳng tới khi gặp sự kiện
+                        VIM:SendKeyEvent(true, Enum.KeyCode.W, false, game)
+                    end
+                end
+            end
         end
     end
 end)
