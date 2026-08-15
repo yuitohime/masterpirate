@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V5 - BẢN HOÀN CHỈNH (KHÔNG BỊ CẮT BỚT)
+-- DELTA UI V5.2 - FIX AUTO QUEST BẰNG REMOTE
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -7,7 +7,6 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 
--- Vùng an toàn của Delta
 local function GetSafeParent()
     local success, result = pcall(function() return gethui() end)
     if success and result then return result end
@@ -17,37 +16,31 @@ local SafeParent = GetSafeParent()
 
 if SafeParent:FindFirstChild("V5_DeltaUI_Max") then SafeParent["V5_DeltaUI_Max"]:Destroy() end
 
--- Cấu hình hệ thống
 local _G_V5 = {
     AutoFarm = false, FarmAll = false, AutoEquip = false, AutoClick = false, AutoSkill = false, AutoQuest = false,
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
     SelectedMonsters = {}, SelectedWeapon = nil, SelectedFruit = nil,
     AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
     MonstersList = {}, WeaponsList = {}, FruitsList = {},
-    ExcludedMobs = {"dummy", "test dmg", "testdmg"} -- Bỏ qua các quái Test DMG
+    ExcludedMobs = {"dummy", "test dmg", "testdmg"}
 }
 
 -- ==========================================
--- 1. TẠO GIAO DIỆN CHÍNH (MAIN UI)
+-- GIAO DIỆN (Đã thu gọn để copy)
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
 ScreenGui.Name = "V5_DeltaUI_Max"
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 620, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MainFrame.BackgroundTransparency = 0.1 -- Trong suốt nhẹ
-MainFrame.Active = true
-MainFrame.Draggable = true
+MainFrame.Size = UDim2.new(0, 620, 0, 420); MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20); MainFrame.BackgroundTransparency = 0.1
+MainFrame.Active = true; MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(0, 200, 255)
 
--- TOP BAR (Tiêu đề & Nút Ẩn/Tắt)
 local TopBar = Instance.new("Frame", MainFrame)
-TopBar.Size = UDim2.new(1, 0, 0, 35)
-TopBar.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+TopBar.Size = UDim2.new(1, 0, 0, 35); TopBar.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
 Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
 local FixCorner = Instance.new("Frame", TopBar)
 FixCorner.Size = UDim2.new(1, 0, 0, 10); FixCorner.Position = UDim2.new(0, 0, 1, -10)
@@ -55,7 +48,7 @@ FixCorner.BackgroundColor3 = Color3.fromRGB(10, 10, 15); FixCorner.BorderSizePix
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V5 (King Legacy Fix)"
+Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V5.2 (Fix Quest Remote)"
 Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -78,23 +71,17 @@ MinBtn.MouseButton1Click:Connect(function()
 end)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- CHIA CỘT (TABS TRÁI & NỘI DUNG PHẢI)
 local TabsFrame = Instance.new("Frame", MainFrame)
-TabsFrame.Name = "TabsFrame"
-TabsFrame.Size = UDim2.new(0.25, 0, 1, -35); TabsFrame.Position = UDim2.new(0, 0, 0, 35)
+TabsFrame.Name = "TabsFrame"; TabsFrame.Size = UDim2.new(0.25, 0, 1, -35); TabsFrame.Position = UDim2.new(0, 0, 0, 35)
 TabsFrame.BackgroundTransparency = 1
 Instance.new("UIListLayout", TabsFrame).Padding = UDim.new(0, 5)
 Instance.new("UIPadding", TabsFrame).PaddingTop = UDim.new(0, 10)
 
 local ContentFrame = Instance.new("Frame", MainFrame)
-ContentFrame.Name = "ContentFrame"
-ContentFrame.Size = UDim2.new(0.75, 0, 1, -35); ContentFrame.Position = UDim2.new(0.25, 0, 0, 35)
+ContentFrame.Name = "ContentFrame"; ContentFrame.Size = UDim2.new(0.75, 0, 1, -35); ContentFrame.Position = UDim2.new(0.25, 0, 0, 35)
 ContentFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ContentFrame.BackgroundTransparency = 0.5
 Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 8)
 
--- ==========================================
--- 2. HÀM TẠO CÁC NÚT (COMPONENTS)
--- ==========================================
 local Pages = {}
 local function CreateTab(name)
     local Btn = Instance.new("TextButton", TabsFrame)
@@ -121,7 +108,6 @@ local function CreateTab(name)
     return Page
 end
 
--- Công tắc gạt (Toggle Switch)
 local function CreateToggleSwitch(parent, text, varName)
     local Frame = Instance.new("Frame", parent)
     Frame.Size = UDim2.new(1, 0, 0, 40); Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
@@ -209,15 +195,12 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
     return Refresh
 end
 
-
--- ==========================================
--- 3. XÂY DỰNG 5 TABS ĐẦY ĐỦ
--- ==========================================
+-- TẠO 5 TABS
 local TabMain = CreateTab("⚔️ Main")
 local TabSettings = CreateTab("⚙️ Settings")
 local TabSkills = CreateTab("⚡ Skills")
-local TabFruit = CreateTab("🍎 Fruits")   -- TAB TRÁI CÂY ĐÃ QUAY LẠI!
-local TabStatus = CreateTab("📊 Status")  -- TAB TRẠNG THÁI ĐÃ QUAY LẠI!
+local TabFruit = CreateTab("🍎 Fruits")
+local TabStatus = CreateTab("📊 Status")
 
 Pages["⚔️ Main"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 Pages["⚔️ Main"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -225,7 +208,7 @@ TabMain.Visible = true
 
 -- --- TAB MAIN ---
 local DropMonsters = CreateDropdown(TabMain, "Chọn Quái (Multi-Select)", {}, "SelectedMonsters", true)
-CreateButton(TabMain, "🔍 Quét Tất Cả Quái Trên Mọi Đảo", function()
+CreateButton(TabMain, "🔍 Quét Tất Cả Quái", function()
     local mobs = {}
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
@@ -240,9 +223,9 @@ CreateButton(TabMain, "🔍 Quét Tất Cả Quái Trên Mọi Đảo", function
 end)
 
 CreateToggleSwitch(TabMain, "Bật Auto Farm", "AutoFarm")
-CreateToggleSwitch(TabMain, "Bật Farm ALL (Bỏ qua chọn quái)", "FarmAll")
-CreateToggleSwitch(TabMain, "Bật Auto Quest (Tự động nhận nhiệm vụ)", "AutoQuest")
-CreateToggleSwitch(TabMain, "Bật Auto Click (Đánh thường)", "AutoClick")
+CreateToggleSwitch(TabMain, "Bật Farm ALL", "FarmAll")
+CreateToggleSwitch(TabMain, "Bật Auto Quest (Nhận nhiệm vụ)", "AutoQuest")
+CreateToggleSwitch(TabMain, "Bật Auto Đánh (Tự chém)", "AutoClick")
 
 -- --- TAB SETTINGS ---
 CreateDropdown(TabSettings, "Kiểu Đánh", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
@@ -267,8 +250,7 @@ CreateToggleSwitch(TabSkills, "Phím C", "Skill_C")
 CreateToggleSwitch(TabSkills, "Phím V", "Skill_V")
 CreateToggleSwitch(TabSkills, "Phím F", "Skill_F")
 
-
--- --- TAB FRUITS (NHẶT TRÁI CÂY) ---
+-- --- TAB FRUITS ---
 local DropFruits = CreateDropdown(TabFruit, "Chọn Trái Cây Đã Rơi", {}, "SelectedFruit", false)
 CreateButton(TabFruit, "🍎 Quét Trái Cây Toàn Bản Đồ", function()
     local fruits = {}
@@ -291,13 +273,10 @@ local function TweenToTarget(targetCFrame)
     local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(HRP, tweenInfo, {CFrame = targetCFrame})
     
-    -- Chống rơi rớt / Đứng im trên không
     local BV = Instance.new("BodyVelocity", HRP)
     BV.MaxForce = Vector3.new(9e9, 9e9, 9e9); BV.Velocity = Vector3.new(0, 0, 0)
     
-    tween:Play()
-    tween.Completed:Wait()
-    BV:Destroy()
+    tween:Play(); tween.Completed:Wait(); BV:Destroy()
 end
 
 CreateButton(TabFruit, "🚀 Bay Đến Trái Đã Chọn", function()
@@ -310,7 +289,7 @@ CreateButton(TabFruit, "🚀 Bay Đến Trái Đã Chọn", function()
     end
 end)
 
-CreateButton(TabFruit, "📦 Lụm Tất Cả Trái (Auto nhặt liên tục)", function()
+CreateButton(TabFruit, "📦 Lụm Tất Cả Trái", function()
     for _, v in pairs(workspace:GetDescendants()) do
         if (v:IsA("Tool") or v:IsA("Model")) and string.find(string.lower(v.Name), "fruit") and not v.Parent:FindFirstChild("Humanoid") then
             local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
@@ -319,15 +298,11 @@ CreateButton(TabFruit, "📦 Lụm Tất Cả Trái (Auto nhặt liên tục)", 
     end
 end)
 
-
--- --- TAB STATUS (BẢNG TRẠNG THÁI) ---
+-- --- TAB STATUS ---
 local StatusFruitList = Instance.new("TextLabel", TabStatus)
-StatusFruitList.Size = UDim2.new(1, 0, 1, 0)
-StatusFruitList.BackgroundTransparency = 1
-StatusFruitList.TextColor3 = Color3.fromRGB(0, 255, 100)
-StatusFruitList.Font = Enum.Font.Gotham; StatusFruitList.TextSize = 13
-StatusFruitList.TextXAlignment = Enum.TextXAlignment.Left
-StatusFruitList.TextYAlignment = Enum.TextYAlignment.Top
+StatusFruitList.Size = UDim2.new(1, 0, 1, 0); StatusFruitList.BackgroundTransparency = 1
+StatusFruitList.TextColor3 = Color3.fromRGB(0, 255, 100); StatusFruitList.Font = Enum.Font.Gotham; StatusFruitList.TextSize = 13
+StatusFruitList.TextXAlignment = Enum.TextXAlignment.Left; StatusFruitList.TextYAlignment = Enum.TextYAlignment.Top
 
 task.spawn(function()
     while task.wait(3) do
@@ -337,31 +312,22 @@ task.spawn(function()
                 table.insert(foundFruits, "🍎 " .. v.Name)
             end
         end
-        if #foundFruits == 0 then 
-            StatusFruitList.Text = "Trạng thái Server:\nChưa tìm thấy trái nào trên map."
-        else 
-            StatusFruitList.Text = "CÁC TRÁI CÂY ĐANG RƠI TRÊN MAP:\n\n" .. table.concat(foundFruits, "\n") 
-        end
+        if #foundFruits == 0 then StatusFruitList.Text = "Trạng thái Server:\nChưa tìm thấy trái nào trên map."
+        else StatusFruitList.Text = "CÁC TRÁI CÂY ĐANG RƠI TRÊN MAP:\n\n" .. table.concat(foundFruits, "\n") end
     end
 end)
 
 -- ==========================================
--- 4. ENGINE LÕI: NOCLIP, ANTI-FALL, AUTO QUEST
+-- ENGINE LÕI
 -- ==========================================
 RunService.Stepped:Connect(function()
     if (_G_V5.AutoFarm or _G_V5.FarmAll) and LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") then v.CanCollide = false end -- Tàng hình vật cản (NoClip)
+            if v:IsA("BasePart") then v.CanCollide = false end
         end
     end
 end)
 
-local function PressKey(key)
-    VIM:SendKeyEvent(true, Enum.KeyCode[key], false, game); task.wait(0.1)
-    VIM:SendKeyEvent(false, Enum.KeyCode[key], false, game)
-end
-
--- Chống rơi xuống nước / Đứng im lơ lửng khi bay
 local function EnableAntiFall(HRP)
     if not HRP:FindFirstChild("FarmAntiFall") then
         local AntiFall = Instance.new("BodyVelocity")
@@ -373,58 +339,58 @@ local function DisableAntiFall(HRP)
     if HRP:FindFirstChild("FarmAntiFall") then HRP.FarmAntiFall:Destroy() end
 end
 
--- AUTO QUEST (KING LEGACY FIX DỰA TRÊN ẢNH DEX)
+local function PressKey(key)
+    VIM:SendKeyEvent(true, Enum.KeyCode[key], false, game); task.wait(0.1)
+    VIM:SendKeyEvent(false, Enum.KeyCode[key], false, game)
+end
+
+-- --- CƠ CHẾ AUTO QUEST MỚI DỰA TRÊN REMOTE EVENT ---
 local function AcceptQuest()
     pcall(function()
-        local pGui = LocalPlayer:FindFirstChild("PlayerGui")
-        if not pGui then return end
-        
-        -- Truy cập chuẩn đường dẫn: PlayerGui -> Main -> QuestUI -> Bg -> Rep -> Yes
-        local main = pGui:FindFirstChild("Main")
-        local questUI = main and main:FindFirstChild("QuestUI")
-        local bg = questUI and questUI:FindFirstChild("Bg")
-        local rep = bg and bg:FindFirstChild("Rep")
-        local yesBtn = rep and rep:FindFirstChild("Yes")
-        
-        if yesBtn and (yesBtn:IsA("TextButton") or yesBtn:IsA("ImageButton")) then
-            if yesBtn.Visible then
-                -- Ép click bằng hàm getconnections (Xuyên qua UI)
-                if getconnections then
-                    for _, connection in pairs(getconnections(yesBtn.MouseButton1Click)) do connection:Fire() end
-                else
-                    -- Dự phòng dùng chuột ảo
-                    local absPos = yesBtn.AbsolutePosition
-                    local absSize = yesBtn.AbsoluteSize
-                    VIM:SendMouseButtonEvent(absPos.X + absSize.X/2, absPos.Y + absSize.Y/2 + 36, 0, true, game, 1)
-                    task.wait(0.1)
-                    VIM:SendMouseButtonEvent(absPos.X + absSize.X/2, absPos.Y + absSize.Y/2 + 36, 0, false, game, 1)
+        -- Quét toàn bộ ReplicatedStorage để tìm Remote Event nhận Quest
+        for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+            if v:IsA("RemoteEvent") then
+                local name = string.lower(v.Name)
+                if string.find(name, "quest") or string.find(name, "accept") or string.find(name, "mission") or string.find(name, "rep") then
+                    -- Gửi tín hiệu để nhận nhiệm vụ
+                    v:FireServer()
+                    v:FireServer("Yes")
+                    v:FireServer("Accept")
+                end
+            elseif v:IsA("RemoteFunction") then
+                local name = string.lower(v.Name)
+                if string.find(name, "quest") or string.find(name, "accept") then
+                    -- Thử gọi hàm
+                    spawn(function()
+                        v:InvokeServer()
+                        v:InvokeServer("Yes")
+                    end)
                 end
             end
         end
     end)
 end
 
--- VÒNG LẶP AUTO FARM CHÍNH
+-- VÒNG LẶP CHÍNH CỦA AUTO
 task.spawn(function()
     while task.wait() do
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
         local HRP = char.HumanoidRootPart
 
-        -- Nhận Nhiệm Vụ
+        -- Gọi hàm nhận nhiệm vụ (Dùng Remote Event)
         if _G_V5.AutoQuest then AcceptQuest() end
 
-        -- Tự động cầm vũ khí
         if _G_V5.AutoEquip and _G_V5.SelectedWeapon then
             local wp = LocalPlayer.Backpack:FindFirstChild(_G_V5.SelectedWeapon)
             if wp then char.Humanoid:EquipTool(wp) end
         end
 
-        -- Đánh & Dùng Kỹ Năng
+        -- CƠ CHẾ AUTO ĐÁNH GỐC (TOOL:ACTIVATE)
         if (_G_V5.AutoFarm or _G_V5.FarmAll) then
             if _G_V5.AutoClick then
-                VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                local equippedTool = char:FindFirstChildWhichIsA("Tool")
+                if equippedTool then equippedTool:Activate() end
             end
             if _G_V5.AutoSkill then
                 if _G_V5.Skill_Z then PressKey("Z") end; if _G_V5.Skill_X then PressKey("X") end
@@ -433,14 +399,12 @@ task.spawn(function()
             end
         end
 
-        -- Bay & Đánh Quái
         if _G_V5.AutoFarm or _G_V5.FarmAll then
             EnableAntiFall(HRP)
             local targetMob, shortestDist = nil, math.huge
             
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
-                    
                     local isValidTarget = false
                     if _G_V5.FarmAll then
                         local isExcluded = false
