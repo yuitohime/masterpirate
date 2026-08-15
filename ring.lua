@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V10 - ULTIMATE (ORIGINAL UI + AUTO HAKI/KEN + FLY FIX)
+-- DELTA UI V10 - ULTIMATE (ORIGINAL UI + SMART AUTO HAKI/KEN + FLY FIX)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -383,17 +383,17 @@ CreateButton(TabIsland, "🚀 Bay Đến Đảo / Điểm Hồi Sinh", function(
 end)
 
 -- --- TAB: NHÂN VẬT ---
-CreateToggleSwitch(TabPlayer, "Bật Hack Tốc Độ Chạy", "EnableSpeed")
+CreateToggleSwitch(TabPlayer, "Bật Hack Tốc Độ Chạy (Bypass)", "EnableSpeed")
 CreateSlider(TabPlayer, "Tốc Độ Chạy (WalkSpeed)", 16, 250, "WalkSpeed")
-CreateToggleSwitch(TabPlayer, "Bật Hack Nhảy Cao", "EnableJump")
+CreateToggleSwitch(TabPlayer, "Bật Hack Nhảy Cao (Bypass)", "EnableJump")
 CreateSlider(TabPlayer, "Lực Nhảy (JumpPower)", 50, 300, "JumpPower")
 CreateToggleSwitch(TabPlayer, "Nhảy Vô Hạn (Infinity Jump)", "InfJump")
 CreateToggleSwitch(TabPlayer, "Lướt Không Hồi Chiêu (Dash No CD)", "DashNoCD")
--- (Thêm chức năng Free Fly)
+-- Free Fly (Bay tự do)
 CreateToggleSwitch(TabPlayer, "🚀 Bay Tự Do (W,A,S,D + Space/Ctrl)", "FreeFly")
 CreateSlider(TabPlayer, "Tốc Độ Bay Tự Do", 50, 500, "FreeFlySpeed")
 
--- --- TAB: SETTINGS & SKILLS ---
+-- --- TAB: SETTINGS ---
 CreateToggleSwitch(TabSettings, "Bật Lặp Lại Quest (Tự Nhận Remote Qu)", "AutoRepeatQuest")
 CreateDropdown(TabSettings, "Kiểu Đánh", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
 CreateSlider(TabSettings, "Khoảng Cách Đánh", 5, 40, "AttackDistance")
@@ -407,9 +407,10 @@ CreateButton(TabSettings, "🎒 Quét Vũ Khí", function()
 end)
 CreateToggleSwitch(TabSettings, "Tự Động Cầm Vũ Khí", "AutoEquip")
 
--- (Thêm chức năng Auto Haki / Ken vào TabSkills)
-CreateToggleSwitch(TabSkills, "🔥 Bật Tự Động Haki (Luôn Bật)", "AutoHaki")
-CreateToggleSwitch(TabSkills, "👁️ Bật Tự Động Ken (Luôn Bật)", "AutoKen")
+-- --- TAB: SKILLS ---
+-- Tính năng Auto Haki / Ken THÔNG MINH
+CreateToggleSwitch(TabSkills, "🔥 Bật Tự Động Haki (Thông Minh)", "AutoHaki")
+CreateToggleSwitch(TabSkills, "👁️ Bật Tự Động Ken (Thông Minh)", "AutoKen")
 
 CreateToggleSwitch(TabSkills, "Kích Hoạt Auto Skill", "AutoSkill")
 CreateToggleSwitch(TabSkills, "Phím Z", "Skill_Z"); CreateToggleSwitch(TabSkills, "Phím X", "Skill_X")
@@ -508,37 +509,39 @@ CreateButton(TabMusic, "▶️ Phát Nhạc", function() local id = string.match
 CreateButton(TabMusic, "⏸️ Dừng Nhạc", function() MusicPlayer:Stop() end)
 
 -- ==========================================
--- ENGINE LÕI
+-- ENGINE LÕI (AUTO HAKI, KEN, FLY, SPEED, AUTO FARM)
 -- ==========================================
 
--- AUTO HAKI / KEN (Gửi Remote liên tục mỗi 2s để luôn giữ trạng thái BẬT, quét sâu vào ReplicatedStorage)
+-- AUTO HAKI / KEN (Logic Thông Minh Từ Người Dùng)
 task.spawn(function()
-    while task.wait(2) do
+    while task.wait(0.5) do
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("Humanoid") then continue end
         if char.Humanoid.Health <= 0 then continue end
         
-        pcall(function()
-            if _G_V10.AutoHaki then
-                for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                    if v:IsA("RemoteEvent") and v.Name == "Haki" then
-                        v:FireServer("GTS", true, nil, true)
-                    end
+        local rs = game:GetService("ReplicatedStorage")
+        
+        -- Logic AUTO HAKI: Nếu không tìm thấy chữ "Haki" -> Tức là Haki đang tắt -> Gửi lệnh bật
+        if _G_V10.AutoHaki then
+            pcall(function()
+                if not char:FindFirstChild("Haki") then
+                    if rs:FindFirstChild("RemoteEvent") then rs.RemoteEvent:FireServer("GTS", true, nil, true) end
+                    if rs:FindFirstChild("Haki") then rs.Haki:FireServer("GTS", true, nil, true) end
+                    if rs:FindFirstChild("MainRemote") then rs.MainRemote:FireServer("Haki", true) end
                 end
-            end
-            
-            if _G_V10.AutoKen then
-                for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                    if v:IsA("RemoteEvent") then
-                        if v.Name == "Ken" then
-                            v:FireServer("GTS", true, nil, true)
-                        elseif v.Name == "MainRemote" then
-                            v:FireServer("Ken", true)
-                        end
-                    end
+            end)
+        end
+        
+        -- Logic AUTO KEN: Nếu không có folder Ken hoặc trong folder Ken có chữ "Close" -> Gửi lệnh bật
+        if _G_V10.AutoKen then
+            pcall(function()
+                local kenNode = char:FindFirstChild("Ken")
+                if not kenNode or (kenNode and kenNode:FindFirstChild("Close")) then
+                    if rs:FindFirstChild("MainRemote") then rs.MainRemote:FireServer("Ken", true) end
+                    if rs:FindFirstChild("Ken") then rs.Ken:FireServer("GTS", true, nil, true) end
                 end
-            end
-        end)
+            end)
+        end
     end
 end)
 
@@ -551,7 +554,7 @@ LocalPlayer.Idled:Connect(function()
     end
 end)
 
--- FIX TỐC ĐỘ VÀ NHẢY CAO (Bypass chống Game Override)
+-- FIX TỐC ĐỘ VÀ NHẢY CAO (Bypass chống Game Reset)
 task.spawn(function()
     while task.wait(0.5) do
         local char = LocalPlayer.Character
@@ -592,7 +595,7 @@ UIS.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- LÕI BAY TỰ DO (ĐÃ FIX LỖI ĐỨNG ĐƠ SAU KHI TẮT BAY BẰNG GETTINGUP STATE)
+-- LÕI BAY TỰ DO (FIX LỖI ĐỨNG ĐƠ SAU KHI TẮT BAY)
 local flyKeys = {W = 0, A = 0, S = 0, D = 0, Up = 0, Down = 0}
 UIS.InputBegan:Connect(function(k, gp)
     if gp then return end
