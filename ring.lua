@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V7 - KING LEGACY AUTO QUEST (PERFECT FIX)
+-- DELTA UI V8 - AUTO FARM LEVEL & QUEST LIST
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -14,22 +14,40 @@ local function GetSafeParent()
 end
 local SafeParent = GetSafeParent()
 
-if SafeParent:FindFirstChild("V7_DeltaUI_Max") then SafeParent["V7_DeltaUI_Max"]:Destroy() end
+if SafeParent:FindFirstChild("V8_DeltaUI_Max") then SafeParent["V8_DeltaUI_Max"]:Destroy() end
 
-local _G_V7 = {
-    AutoFarm = false, FarmAll = false, AutoEquip = false, AutoClick = false, AutoSkill = false, AutoQuest = false,
+-- ==========================================
+-- 📚 DATABASE NHIỆM VỤ (BẠN CÓ THỂ TỰ THÊM VÀO ĐÂY)
+-- ==========================================
+local QuestDB = {
+    {Level = 1, QuestName = "Bandit [Lv. 1]", MobName = "Bandit", NPC = "Quest Giver"},
+    {Level = 10, QuestName = "Naval Student [Lv. 10]", MobName = "Naval Rating Student", NPC = "Quest Giver"},
+    {Level = 30, QuestName = "Pirate [Lv. 30]", MobName = "Pirate", NPC = "Quest Giver"},
+    -- Mẫu để thêm: {Level = Cấp độ yêu cầu, QuestName = "Tên hiển thị", MobName = "Tên Quái vật", NPC = "Tên con NPC"},
+}
+
+-- Lấy danh sách tên Quest để đưa vào UI
+local QuestListNames = {}
+for i, v in ipairs(QuestDB) do table.insert(QuestListNames, v.QuestName) end
+
+local _G_V8 = {
+    -- Free Farm (Farm tự do)
+    AutoFarmFree = false, FarmAll = false, SelectedMonsters = {}, ExcludedMobs = {"dummy", "test dmg", "testdmg"},
+    -- Auto Level & Quest
+    AutoFarmLevel = false, ManualQuestFarm = false, SelectedManualQuest = nil,
+    CurrentTargetMob = nil, -- Biến linh hoạt để thay đổi mục tiêu theo level
+    -- Setting chung
+    AutoEquip = false, AutoClick = false, AutoSkill = false, AutoRepeatQuest = false,
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
-    SelectedMonsters = {}, SelectedWeapon = nil, SelectedFruit = nil,
+    SelectedWeapon = nil, SelectedFruit = nil,
     AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
-    MonstersList = {}, WeaponsList = {}, FruitsList = {},
-    ExcludedMobs = {"dummy", "test dmg", "testdmg"}
 }
 
 -- ==========================================
 -- GIAO DIỆN CHÍNH
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
-ScreenGui.Name = "V7_DeltaUI_Max"
+ScreenGui.Name = "V8_DeltaUI_Max"
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -48,7 +66,7 @@ FixCorner.BackgroundColor3 = Color3.fromRGB(10, 10, 15); FixCorner.BorderSizePix
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V7 (King Legacy 100% Fix)"
+Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V8 (Level & Quest List)"
 Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -66,28 +84,32 @@ local isMinimized = false
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     MainFrame.Size = isMinimized and UDim2.new(0, 620, 0, 35) or UDim2.new(0, 620, 0, 420)
-    MainFrame:FindFirstChild("TabsFrame").Visible = not isMinimized
-    MainFrame:FindFirstChild("ContentFrame").Visible = not isMinimized
+    for _, v in pairs(MainFrame:GetChildren()) do
+        if v.Name == "TabsFrame" or v.Name == "ContentFrame" then v.Visible = not isMinimized end
+    end
 end)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
 local TabsFrame = Instance.new("Frame", MainFrame)
-TabsFrame.Name = "TabsFrame"; TabsFrame.Size = UDim2.new(0.25, 0, 1, -35); TabsFrame.Position = UDim2.new(0, 0, 0, 35)
+TabsFrame.Name = "TabsFrame"; TabsFrame.Size = UDim2.new(0.28, 0, 1, -35); TabsFrame.Position = UDim2.new(0, 0, 0, 35)
 TabsFrame.BackgroundTransparency = 1
 Instance.new("UIListLayout", TabsFrame).Padding = UDim.new(0, 5)
 Instance.new("UIPadding", TabsFrame).PaddingTop = UDim.new(0, 10)
 
 local ContentFrame = Instance.new("Frame", MainFrame)
-ContentFrame.Name = "ContentFrame"; ContentFrame.Size = UDim2.new(0.75, 0, 1, -35); ContentFrame.Position = UDim2.new(0.25, 0, 0, 35)
+ContentFrame.Name = "ContentFrame"; ContentFrame.Size = UDim2.new(0.72, 0, 1, -35); ContentFrame.Position = UDim2.new(0.28, 0, 0, 35)
 ContentFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ContentFrame.BackgroundTransparency = 0.5
 Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 8)
 
+-- ==========================================
+-- HÀM TẠO COMPONENTS UI
+-- ==========================================
 local Pages = {}
 local function CreateTab(name)
     local Btn = Instance.new("TextButton", TabsFrame)
     Btn.Size = UDim2.new(1, -10, 0, 40); Btn.Position = UDim2.new(0, 5, 0, 0)
     Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35); Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    Btn.Text = name; Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 14
+    Btn.Text = "  " .. name; Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 13; Btn.TextXAlignment = Enum.TextXAlignment.Left
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
 
     local Page = Instance.new("ScrollingFrame", ContentFrame)
@@ -116,7 +138,7 @@ local function CreateToggleSwitch(parent, text, varName)
     local Lbl = Instance.new("TextLabel", Frame)
     Lbl.Size = UDim2.new(0.7, 0, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
     Lbl.BackgroundTransparency = 1; Lbl.Text = text; Lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 14; Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 13; Lbl.TextXAlignment = Enum.TextXAlignment.Left
 
     local SwitchBG = Instance.new("TextButton", Frame)
     SwitchBG.Size = UDim2.new(0, 40, 0, 20); SwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
@@ -129,8 +151,8 @@ local function CreateToggleSwitch(parent, text, varName)
     Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
     SwitchBG.MouseButton1Click:Connect(function()
-        _G_V7[varName] = not _G_V7[varName]
-        if _G_V7[varName] then
+        _G_V8[varName] = not _G_V8[varName]
+        if _G_V8[varName] then
             SwitchBG.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
             Knob:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
         else
@@ -138,15 +160,6 @@ local function CreateToggleSwitch(parent, text, varName)
             Knob:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
         end
     end)
-end
-
-local function CreateButton(parent, text, callback)
-    local Btn = Instance.new("TextButton", parent)
-    Btn.Size = UDim2.new(1, 0, 0, 35); Btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255); Btn.Text = text
-    Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 14
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-    Btn.MouseButton1Click:Connect(callback)
 end
 
 local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
@@ -179,11 +192,11 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
             
             Btn.MouseButton1Click:Connect(function()
                 if multiSelect then
-                    local idx = table.find(_G_V7[globalVar], item)
-                    if idx then table.remove(_G_V7[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-                    else table.insert(_G_V7[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
+                    local idx = table.find(_G_V8[globalVar], item)
+                    if idx then table.remove(_G_V8[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+                    else table.insert(_G_V8[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
                 else
-                    _G_V7[globalVar] = item
+                    _G_V8[globalVar] = item
                     MainBtn.Text = "  " .. title .. ": " .. item
                     Frame.Size = UDim2.new(1, 0, 0, 35)
                 end
@@ -195,44 +208,61 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
     return Refresh
 end
 
--- TẠO CÁC TABS
-local TabMain = CreateTab("⚔️ Main")
-local TabSettings = CreateTab("⚙️ Settings")
-local TabSkills = CreateTab("⚡ Skills")
-local TabFruit = CreateTab("🍎 Fruits")
-local TabStatus = CreateTab("📊 Status")
+local function CreateButton(parent, text, callback)
+    local Btn = Instance.new("TextButton", parent)
+    Btn.Size = UDim2.new(1, 0, 0, 35); Btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255); Btn.Text = text
+    Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 14
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+    Btn.MouseButton1Click:Connect(callback)
+end
 
-Pages["⚔️ Main"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-Pages["⚔️ Main"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-TabMain.Visible = true
+-- ==========================================
+-- XÂY DỰNG TABS
+-- ==========================================
+local TabAutoLevel = CreateTab("🌟 Farm Level")
+local TabFreeFarm = CreateTab("⚔️ Farm Tự Do")
+local TabSettings = CreateTab("⚙️ Cài Đặt")
+local TabSkills = CreateTab("⚡ Kỹ Năng")
 
--- --- TAB MAIN ---
-local DropMonsters = CreateDropdown(TabMain, "Chọn Quái (Multi-Select)", {}, "SelectedMonsters", true)
-CreateButton(TabMain, "🔍 Quét Tất Cả Quái", function()
+Pages["🌟 Farm Level"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+Pages["🌟 Farm Level"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+TabAutoLevel.Visible = true
+
+-- --- TAB: FARM LEVEL (MỚI) ---
+local LblInfo = Instance.new("TextLabel", TabAutoLevel)
+LblInfo.Size = UDim2.new(1, 0, 0, 20); LblInfo.BackgroundTransparency = 1
+LblInfo.TextColor3 = Color3.fromRGB(255, 255, 100); LblInfo.Font = Enum.Font.Gotham; LblInfo.TextSize = 13
+LblInfo.TextXAlignment = Enum.TextXAlignment.Left
+LblInfo.Text = "Mục tiêu hiện tại: Đang lấy thông tin..."
+
+CreateToggleSwitch(TabAutoLevel, "Bật Auto Farm Level (Tự Chuyển Bãi)", "AutoFarmLevel")
+CreateDropdown(TabAutoLevel, "Chọn Quest Bằng Tay", QuestListNames, "SelectedManualQuest", false)
+CreateToggleSwitch(TabAutoLevel, "Bật Đánh Quest Đã Chọn Trên", "ManualQuestFarm")
+CreateToggleSwitch(TabAutoLevel, "Bật Lặp Lại Quest (Hoàn Hảo)", "AutoRepeatQuest")
+CreateToggleSwitch(TabAutoLevel, "Bật Tự Động Đánh (Click)", "AutoClick")
+
+-- --- TAB: FARM TỰ DO (MŨ CŨ) ---
+local DropMonsters = CreateDropdown(TabFreeFarm, "Chọn Quái Tùy Ý (Multi-Select)", {}, "SelectedMonsters", true)
+CreateButton(TabFreeFarm, "🔍 Quét Tất Cả Quái Trên Map", function()
     local mobs = {}
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
             local isExcluded = false
-            for _, ex in pairs(_G_V7.ExcludedMobs) do
-                if string.find(string.lower(v.Name), ex) then isExcluded = true; break end
-            end
+            for _, ex in pairs(_G_V8.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isExcluded = true; break end end
             if not isExcluded and not table.find(mobs, v.Name) then table.insert(mobs, v.Name) end
         end
     end
     table.sort(mobs); DropMonsters(mobs)
 end)
+CreateToggleSwitch(TabFreeFarm, "Bật Farm Quái Tự Do (Free Farm)", "AutoFarmFree")
+CreateToggleSwitch(TabFreeFarm, "Bật Farm ALL (Càn quét Map)", "FarmAll")
 
-CreateToggleSwitch(TabMain, "Bật Auto Farm", "AutoFarm")
-CreateToggleSwitch(TabMain, "Bật Farm ALL", "FarmAll")
-CreateToggleSwitch(TabMain, "Bật Auto Quest (HOÀN HẢO)", "AutoQuest")
-CreateToggleSwitch(TabMain, "Bật Auto Đánh", "AutoClick")
-
--- --- TAB SETTINGS ---
+-- --- TAB: SETTINGS & SKILLS ---
 CreateDropdown(TabSettings, "Kiểu Đánh", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
-CreateDropdown(TabSettings, "Khoảng Cách", {5, 10, 15, 20, 30}, "AttackDistance", false)
 CreateDropdown(TabSettings, "Tốc Độ Bay", {100, 200, 300, 400}, "FlySpeed", false)
 local DropWeapons = CreateDropdown(TabSettings, "Chọn Vũ Khí", {}, "SelectedWeapon", false)
-CreateButton(TabSettings, "🎒 Quét Túi Đồ", function()
+CreateButton(TabSettings, "🎒 Quét Vũ Khí", function()
     local weps = {}
     for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do if v:IsA("Tool") then table.insert(weps, v.Name) end end
     if LocalPlayer.Character then
@@ -240,9 +270,8 @@ CreateButton(TabSettings, "🎒 Quét Túi Đồ", function()
     end
     DropWeapons(weps)
 end)
-CreateToggleSwitch(TabSettings, "Bật Tự Động Cầm Vũ Khí", "AutoEquip")
+CreateToggleSwitch(TabSettings, "Tự Động Cầm Vũ Khí", "AutoEquip")
 
--- --- TAB SKILLS ---
 CreateToggleSwitch(TabSkills, "Kích Hoạt Auto Skill", "AutoSkill")
 CreateToggleSwitch(TabSkills, "Phím Z", "Skill_Z")
 CreateToggleSwitch(TabSkills, "Phím X", "Skill_X")
@@ -250,78 +279,12 @@ CreateToggleSwitch(TabSkills, "Phím C", "Skill_C")
 CreateToggleSwitch(TabSkills, "Phím V", "Skill_V")
 CreateToggleSwitch(TabSkills, "Phím F", "Skill_F")
 
--- --- TAB FRUITS ---
-local DropFruits = CreateDropdown(TabFruit, "Chọn Trái Cây", {}, "SelectedFruit", false)
-CreateButton(TabFruit, "🍎 Quét Trái Cây", function()
-    local fruits = {}
-    for _, v in pairs(workspace:GetDescendants()) do
-        if (v:IsA("Tool") or v:IsA("Model")) and (string.find(string.lower(v.Name), "fruit") or v:FindFirstChild("Handle")) then
-            if not v.Parent:FindFirstChild("Humanoid") then
-                if not table.find(fruits, v.Name) then table.insert(fruits, v.Name) end
-            end
-        end
-    end
-    DropFruits(fruits)
-end)
-
-local function TweenToTarget(targetCFrame)
-    local HRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not HRP then return end
-    
-    local distance = (HRP.Position - targetCFrame.Position).Magnitude
-    local time = distance / _G_V7.FlySpeed
-    local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(HRP, tweenInfo, {CFrame = targetCFrame})
-    
-    local BV = Instance.new("BodyVelocity", HRP)
-    BV.MaxForce = Vector3.new(9e9, 9e9, 9e9); BV.Velocity = Vector3.new(0, 0, 0)
-    
-    tween:Play(); tween.Completed:Wait(); BV:Destroy()
-end
-
-CreateButton(TabFruit, "🚀 Bay Đến Trái Đã Chọn", function()
-    if not _G_V7.SelectedFruit then return end
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == _G_V7.SelectedFruit then
-            local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
-            if targetPart then TweenToTarget(targetPart.CFrame) break end
-        end
-    end
-end)
-
-CreateButton(TabFruit, "📦 Lụm Tất Cả Trái", function()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if (v:IsA("Tool") or v:IsA("Model")) and string.find(string.lower(v.Name), "fruit") and not v.Parent:FindFirstChild("Humanoid") then
-            local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
-            if targetPart then TweenToTarget(targetPart.CFrame); task.wait(0.5) end
-        end
-    end
-end)
-
--- --- TAB STATUS ---
-local StatusFruitList = Instance.new("TextLabel", TabStatus)
-StatusFruitList.Size = UDim2.new(1, 0, 1, 0); StatusFruitList.BackgroundTransparency = 1
-StatusFruitList.TextColor3 = Color3.fromRGB(0, 255, 100); StatusFruitList.Font = Enum.Font.Gotham; StatusFruitList.TextSize = 13
-StatusFruitList.TextXAlignment = Enum.TextXAlignment.Left; StatusFruitList.TextYAlignment = Enum.TextYAlignment.Top
-
-task.spawn(function()
-    while task.wait(3) do
-        local foundFruits = {}
-        for _, v in pairs(workspace:GetDescendants()) do
-            if (v:IsA("Tool") or v:IsA("Model")) and string.find(string.lower(v.Name), "fruit") and not v.Parent:FindFirstChild("Humanoid") then
-                table.insert(foundFruits, "🍎 " .. v.Name)
-            end
-        end
-        if #foundFruits == 0 then StatusFruitList.Text = "Trạng thái Server:\nChưa tìm thấy trái nào trên map."
-        else StatusFruitList.Text = "CÁC TRÁI CÂY ĐANG RƠI TRÊN MAP:\n\n" .. table.concat(foundFruits, "\n") end
-    end
-end)
 
 -- ==========================================
 -- ENGINE LÕI
 -- ==========================================
 RunService.Stepped:Connect(function()
-    if (_G_V7.AutoFarm or _G_V7.FarmAll) and LocalPlayer.Character then
+    if (_G_V8.AutoFarmLevel or _G_V8.ManualQuestFarm or _G_V8.AutoFarmFree or _G_V8.FarmAll) and LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
             if v:IsA("BasePart") then v.CanCollide = false end
         end
@@ -344,82 +307,128 @@ local function PressKey(key)
     VIM:SendKeyEvent(false, Enum.KeyCode[key], false, game)
 end
 
--- ==========================================
--- GIẢI PHÁP AUTO QUEST DỰA TRÊN ẢNH (CHỈ GỬI ĐÚNG "Yes")
--- ==========================================
-local function AcceptQuest()
+-- Lấy Level người chơi (Thích ứng nhiều cấu trúc game)
+local function GetPlayerLevel()
+    local lvl = 1
     pcall(function()
-        for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-            -- Dựa vào ảnh Hydroxide: Tên Remote là "Qu" và gửi dữ liệu là "Yes"
-            if v:IsA("RemoteEvent") and v.Name == "Qu" then
-                v:FireServer("Yes")
-            end
+        if LocalPlayer:FindFirstChild("leaderstats") and LocalPlayer.leaderstats:FindFirstChild("Level") then
+            lvl = tonumber(LocalPlayer.leaderstats.Level.Value) or 1
+        elseif LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Level") then
+            lvl = tonumber(LocalPlayer.Data.Level.Value) or 1
         end
     end)
+    return lvl
 end
 
--- VÒNG LẶP CHÍNH CỦA AUTO
-local lastQuestTime = 0
+-- Tìm Quái Vật Phù Hợp Cho Auto Level
+local function GetMobForCurrentLevel()
+    local myLevel = GetPlayerLevel()
+    local targetMob = QuestDB[1].MobName
+    local targetQuest = QuestDB[1].QuestName
+    
+    for i = 1, #QuestDB do
+        if myLevel >= QuestDB[i].Level then
+            targetMob = QuestDB[i].MobName
+            targetQuest = QuestDB[i].QuestName
+        end
+    end
+    return targetMob, targetQuest
+end
 
+-- Lặp Lại Nhiệm Vụ (Cơ chế cũ siêu việt)
+local lastQuestTime = 0
+local function RepeatQuestRemote()
+    if os.clock() - lastQuestTime > 1 then
+        lastQuestTime = os.clock()
+        pcall(function()
+            for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "Qu" then v:FireServer("Yes") end
+            end
+        end)
+    end
+end
+
+-- VÒNG LẶP CHÍNH
 task.spawn(function()
     while task.wait() do
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
         local HRP = char.HumanoidRootPart
 
-        -- Nhận nhiệm vụ (Chỉ gọi mỗi 1 giây 1 lần để tránh bị kick do spam)
-        if _G_V7.AutoQuest and os.clock() - lastQuestTime > 1 then
-            lastQuestTime = os.clock()
-            AcceptQuest()
+        -- 1. Xác định Mục Tiêu (Target Mob) dựa trên các chế độ bật
+        _G_V8.CurrentTargetMob = nil
+        
+        if _G_V8.AutoFarmLevel then
+            local mob, qName = GetMobForCurrentLevel()
+            _G_V8.CurrentTargetMob = {mob}
+            LblInfo.Text = "Đang Farm theo Level: " .. qName
+        elseif _G_V8.ManualQuestFarm and _G_V8.SelectedManualQuest then
+            for _, v in pairs(QuestDB) do
+                if v.QuestName == _G_V8.SelectedManualQuest then 
+                    _G_V8.CurrentTargetMob = {v.MobName}
+                    LblInfo.Text = "Đang Farm (Thủ Công): " .. v.QuestName
+                end
+            end
+        elseif _G_V8.AutoFarmFree and #_G_V8.SelectedMonsters > 0 then
+            _G_V8.CurrentTargetMob = _G_V8.SelectedMonsters
+            LblInfo.Text = "Đang Farm Tự Do"
+        elseif _G_V8.FarmAll then
+            LblInfo.Text = "Đang Càn Quét (Farm All)"
+        else
+            LblInfo.Text = "Đang rảnh rỗi..."
         end
 
-        -- Cầm vũ khí
-        if _G_V7.AutoEquip and _G_V7.SelectedWeapon then
-            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V7.SelectedWeapon)
+        -- 2. Hành động phụ trợ
+        if _G_V8.AutoRepeatQuest then RepeatQuestRemote() end
+
+        if _G_V8.AutoEquip and _G_V8.SelectedWeapon then
+            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V8.SelectedWeapon)
             if wp then char.Humanoid:EquipTool(wp) end
         end
 
-        -- Đánh & Dùng Skill (DÙNG TOOL:ACTIVATE)
-        if (_G_V7.AutoFarm or _G_V7.FarmAll) then
-            if _G_V7.AutoClick then
+        local isFarming = _G_V8.AutoFarmLevel or _G_V8.ManualQuestFarm or _G_V8.AutoFarmFree or _G_V8.FarmAll
+
+        if isFarming then
+            if _G_V8.AutoClick then
                 local equippedTool = char:FindFirstChildWhichIsA("Tool")
                 if equippedTool then equippedTool:Activate() end
             end
-            if _G_V7.AutoSkill then
-                if _G_V7.Skill_Z then PressKey("Z") end; if _G_V7.Skill_X then PressKey("X") end
-                if _G_V7.Skill_C then PressKey("C") end; if _G_V7.Skill_V then PressKey("V") end
-                if _G_V7.Skill_F then PressKey("F") end
+            if _G_V8.AutoSkill then
+                if _G_V8.Skill_Z then PressKey("Z") end; if _G_V8.Skill_X then PressKey("X") end
+                if _G_V8.Skill_C then PressKey("C") end; if _G_V8.Skill_V then PressKey("V") end
+                if _G_V8.Skill_F then PressKey("F") end
             end
-        end
-
-        -- Di chuyển & Farm
-        if _G_V7.AutoFarm or _G_V7.FarmAll then
-            EnableAntiFall(HRP)
-            local targetMob, shortestDist = nil, math.huge
             
+            EnableAntiFall(HRP)
+            local targetMobInstance, shortestDist = nil, math.huge
+            
+            -- Tìm quái vật
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
+                    
                     local isValidTarget = false
-                    if _G_V7.FarmAll then
-                        local isExcluded = false
-                        for _, ex in pairs(_G_V7.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isExcluded = true; break end end
-                        if not isExcluded then isValidTarget = true end
-                    elseif table.find(_G_V7.SelectedMonsters, v.Name) then
+                    
+                    if _G_V8.FarmAll then
+                        local isEx = false
+                        for _, ex in pairs(_G_V8.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
+                        if not isEx then isValidTarget = true end
+                    elseif _G_V8.CurrentTargetMob and table.find(_G_V8.CurrentTargetMob, v.Name) then
                         isValidTarget = true
                     end
 
                     if isValidTarget then
                         local dist = (HRP.Position - v.HumanoidRootPart.Position).Magnitude
-                        if dist < shortestDist then shortestDist = dist; targetMob = v end
+                        if dist < shortestDist then shortestDist = dist; targetMobInstance = v end
                     end
                 end
             end
 
-            if targetMob then
-                local mobPos = targetMob.HumanoidRootPart.CFrame
-                local offset = CFrame.new(0, _G_V7.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
-                if _G_V7.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V7.AttackDistance)
-                elseif _G_V7.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V7.AttackDistance, 0) end
+            -- Di chuyển đến quái
+            if targetMobInstance then
+                local mobPos = targetMobInstance.HumanoidRootPart.CFrame
+                local offset = CFrame.new(0, _G_V8.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
+                if _G_V8.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V8.AttackDistance)
+                elseif _G_V8.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V8.AttackDistance, 0) end
                 
                 HRP.CFrame = mobPos * offset
             end
