@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V5.2 - FIX AUTO QUEST BẰNG REMOTE
+-- DELTA UI V7 - KING LEGACY AUTO QUEST (PERFECT FIX)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -14,9 +14,9 @@ local function GetSafeParent()
 end
 local SafeParent = GetSafeParent()
 
-if SafeParent:FindFirstChild("V5_DeltaUI_Max") then SafeParent["V5_DeltaUI_Max"]:Destroy() end
+if SafeParent:FindFirstChild("V7_DeltaUI_Max") then SafeParent["V7_DeltaUI_Max"]:Destroy() end
 
-local _G_V5 = {
+local _G_V7 = {
     AutoFarm = false, FarmAll = false, AutoEquip = false, AutoClick = false, AutoSkill = false, AutoQuest = false,
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
     SelectedMonsters = {}, SelectedWeapon = nil, SelectedFruit = nil,
@@ -26,10 +26,10 @@ local _G_V5 = {
 }
 
 -- ==========================================
--- GIAO DIỆN (Đã thu gọn để copy)
+-- GIAO DIỆN CHÍNH
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
-ScreenGui.Name = "V5_DeltaUI_Max"
+ScreenGui.Name = "V7_DeltaUI_Max"
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -48,7 +48,7 @@ FixCorner.BackgroundColor3 = Color3.fromRGB(10, 10, 15); FixCorner.BorderSizePix
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V5.2 (Fix Quest Remote)"
+Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V7 (King Legacy 100% Fix)"
 Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -129,8 +129,8 @@ local function CreateToggleSwitch(parent, text, varName)
     Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
     SwitchBG.MouseButton1Click:Connect(function()
-        _G_V5[varName] = not _G_V5[varName]
-        if _G_V5[varName] then
+        _G_V7[varName] = not _G_V7[varName]
+        if _G_V7[varName] then
             SwitchBG.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
             Knob:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
         else
@@ -179,11 +179,11 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
             
             Btn.MouseButton1Click:Connect(function()
                 if multiSelect then
-                    local idx = table.find(_G_V5[globalVar], item)
-                    if idx then table.remove(_G_V5[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-                    else table.insert(_G_V5[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
+                    local idx = table.find(_G_V7[globalVar], item)
+                    if idx then table.remove(_G_V7[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+                    else table.insert(_G_V7[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
                 else
-                    _G_V5[globalVar] = item
+                    _G_V7[globalVar] = item
                     MainBtn.Text = "  " .. title .. ": " .. item
                     Frame.Size = UDim2.new(1, 0, 0, 35)
                 end
@@ -195,7 +195,7 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
     return Refresh
 end
 
--- TẠO 5 TABS
+-- TẠO CÁC TABS
 local TabMain = CreateTab("⚔️ Main")
 local TabSettings = CreateTab("⚙️ Settings")
 local TabSkills = CreateTab("⚡ Skills")
@@ -213,7 +213,7 @@ CreateButton(TabMain, "🔍 Quét Tất Cả Quái", function()
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
             local isExcluded = false
-            for _, ex in pairs(_G_V5.ExcludedMobs) do
+            for _, ex in pairs(_G_V7.ExcludedMobs) do
                 if string.find(string.lower(v.Name), ex) then isExcluded = true; break end
             end
             if not isExcluded and not table.find(mobs, v.Name) then table.insert(mobs, v.Name) end
@@ -224,8 +224,8 @@ end)
 
 CreateToggleSwitch(TabMain, "Bật Auto Farm", "AutoFarm")
 CreateToggleSwitch(TabMain, "Bật Farm ALL", "FarmAll")
-CreateToggleSwitch(TabMain, "Bật Auto Quest (Nhận nhiệm vụ)", "AutoQuest")
-CreateToggleSwitch(TabMain, "Bật Auto Đánh (Tự chém)", "AutoClick")
+CreateToggleSwitch(TabMain, "Bật Auto Quest (HOÀN HẢO)", "AutoQuest")
+CreateToggleSwitch(TabMain, "Bật Auto Đánh", "AutoClick")
 
 -- --- TAB SETTINGS ---
 CreateDropdown(TabSettings, "Kiểu Đánh", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
@@ -251,8 +251,8 @@ CreateToggleSwitch(TabSkills, "Phím V", "Skill_V")
 CreateToggleSwitch(TabSkills, "Phím F", "Skill_F")
 
 -- --- TAB FRUITS ---
-local DropFruits = CreateDropdown(TabFruit, "Chọn Trái Cây Đã Rơi", {}, "SelectedFruit", false)
-CreateButton(TabFruit, "🍎 Quét Trái Cây Toàn Bản Đồ", function()
+local DropFruits = CreateDropdown(TabFruit, "Chọn Trái Cây", {}, "SelectedFruit", false)
+CreateButton(TabFruit, "🍎 Quét Trái Cây", function()
     local fruits = {}
     for _, v in pairs(workspace:GetDescendants()) do
         if (v:IsA("Tool") or v:IsA("Model")) and (string.find(string.lower(v.Name), "fruit") or v:FindFirstChild("Handle")) then
@@ -269,7 +269,7 @@ local function TweenToTarget(targetCFrame)
     if not HRP then return end
     
     local distance = (HRP.Position - targetCFrame.Position).Magnitude
-    local time = distance / _G_V5.FlySpeed
+    local time = distance / _G_V7.FlySpeed
     local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(HRP, tweenInfo, {CFrame = targetCFrame})
     
@@ -280,9 +280,9 @@ local function TweenToTarget(targetCFrame)
 end
 
 CreateButton(TabFruit, "🚀 Bay Đến Trái Đã Chọn", function()
-    if not _G_V5.SelectedFruit then return end
+    if not _G_V7.SelectedFruit then return end
     for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == _G_V5.SelectedFruit then
+        if v.Name == _G_V7.SelectedFruit then
             local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
             if targetPart then TweenToTarget(targetPart.CFrame) break end
         end
@@ -321,7 +321,7 @@ end)
 -- ENGINE LÕI
 -- ==========================================
 RunService.Stepped:Connect(function()
-    if (_G_V5.AutoFarm or _G_V5.FarmAll) and LocalPlayer.Character then
+    if (_G_V7.AutoFarm or _G_V7.FarmAll) and LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
             if v:IsA("BasePart") then v.CanCollide = false end
         end
@@ -344,73 +344,67 @@ local function PressKey(key)
     VIM:SendKeyEvent(false, Enum.KeyCode[key], false, game)
 end
 
--- --- CƠ CHẾ AUTO QUEST MỚI DỰA TRÊN REMOTE EVENT ---
+-- ==========================================
+-- GIẢI PHÁP AUTO QUEST DỰA TRÊN ẢNH (CHỈ GỬI ĐÚNG "Yes")
+-- ==========================================
 local function AcceptQuest()
     pcall(function()
-        -- Quét toàn bộ ReplicatedStorage để tìm Remote Event nhận Quest
         for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-            if v:IsA("RemoteEvent") then
-                local name = string.lower(v.Name)
-                if string.find(name, "quest") or string.find(name, "accept") or string.find(name, "mission") or string.find(name, "rep") then
-                    -- Gửi tín hiệu để nhận nhiệm vụ
-                    v:FireServer()
-                    v:FireServer("Yes")
-                    v:FireServer("Accept")
-                end
-            elseif v:IsA("RemoteFunction") then
-                local name = string.lower(v.Name)
-                if string.find(name, "quest") or string.find(name, "accept") then
-                    -- Thử gọi hàm
-                    spawn(function()
-                        v:InvokeServer()
-                        v:InvokeServer("Yes")
-                    end)
-                end
+            -- Dựa vào ảnh Hydroxide: Tên Remote là "Qu" và gửi dữ liệu là "Yes"
+            if v:IsA("RemoteEvent") and v.Name == "Qu" then
+                v:FireServer("Yes")
             end
         end
     end)
 end
 
 -- VÒNG LẶP CHÍNH CỦA AUTO
+local lastQuestTime = 0
+
 task.spawn(function()
     while task.wait() do
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
         local HRP = char.HumanoidRootPart
 
-        -- Gọi hàm nhận nhiệm vụ (Dùng Remote Event)
-        if _G_V5.AutoQuest then AcceptQuest() end
+        -- Nhận nhiệm vụ (Chỉ gọi mỗi 1 giây 1 lần để tránh bị kick do spam)
+        if _G_V7.AutoQuest and os.clock() - lastQuestTime > 1 then
+            lastQuestTime = os.clock()
+            AcceptQuest()
+        end
 
-        if _G_V5.AutoEquip and _G_V5.SelectedWeapon then
-            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V5.SelectedWeapon)
+        -- Cầm vũ khí
+        if _G_V7.AutoEquip and _G_V7.SelectedWeapon then
+            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V7.SelectedWeapon)
             if wp then char.Humanoid:EquipTool(wp) end
         end
 
-        -- CƠ CHẾ AUTO ĐÁNH GỐC (TOOL:ACTIVATE)
-        if (_G_V5.AutoFarm or _G_V5.FarmAll) then
-            if _G_V5.AutoClick then
+        -- Đánh & Dùng Skill (DÙNG TOOL:ACTIVATE)
+        if (_G_V7.AutoFarm or _G_V7.FarmAll) then
+            if _G_V7.AutoClick then
                 local equippedTool = char:FindFirstChildWhichIsA("Tool")
                 if equippedTool then equippedTool:Activate() end
             end
-            if _G_V5.AutoSkill then
-                if _G_V5.Skill_Z then PressKey("Z") end; if _G_V5.Skill_X then PressKey("X") end
-                if _G_V5.Skill_C then PressKey("C") end; if _G_V5.Skill_V then PressKey("V") end
-                if _G_V5.Skill_F then PressKey("F") end
+            if _G_V7.AutoSkill then
+                if _G_V7.Skill_Z then PressKey("Z") end; if _G_V7.Skill_X then PressKey("X") end
+                if _G_V7.Skill_C then PressKey("C") end; if _G_V7.Skill_V then PressKey("V") end
+                if _G_V7.Skill_F then PressKey("F") end
             end
         end
 
-        if _G_V5.AutoFarm or _G_V5.FarmAll then
+        -- Di chuyển & Farm
+        if _G_V7.AutoFarm or _G_V7.FarmAll then
             EnableAntiFall(HRP)
             local targetMob, shortestDist = nil, math.huge
             
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
                     local isValidTarget = false
-                    if _G_V5.FarmAll then
+                    if _G_V7.FarmAll then
                         local isExcluded = false
-                        for _, ex in pairs(_G_V5.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isExcluded = true; break end end
+                        for _, ex in pairs(_G_V7.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isExcluded = true; break end end
                         if not isExcluded then isValidTarget = true end
-                    elseif table.find(_G_V5.SelectedMonsters, v.Name) then
+                    elseif table.find(_G_V7.SelectedMonsters, v.Name) then
                         isValidTarget = true
                     end
 
@@ -423,9 +417,9 @@ task.spawn(function()
 
             if targetMob then
                 local mobPos = targetMob.HumanoidRootPart.CFrame
-                local offset = CFrame.new(0, _G_V5.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
-                if _G_V5.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V5.AttackDistance)
-                elseif _G_V5.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V5.AttackDistance, 0) end
+                local offset = CFrame.new(0, _G_V7.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
+                if _G_V7.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V7.AttackDistance)
+                elseif _G_V7.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V7.AttackDistance, 0) end
                 
                 HRP.CFrame = mobPos * offset
             end
