@@ -1,6 +1,6 @@
 -- ==========================================
--- DELTA UI V14 - THE ABSOLUTE FINAL EDITION
--- (Giao diện hộp 2 cột + Nút Ẩn + Lõi V10 Full Chức Năng)
+-- DELTA UI V15 - BẢN KHÔI PHỤC TUYỆT ĐỐI TỪ V10
+-- (Giao diện 2 cột + Nút Ẩn + ĐẦY ĐỦ 100% TÍNH NĂNG)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -17,7 +17,7 @@ local function GetSafeParent()
     return LocalPlayer:WaitForChild("PlayerGui")
 end
 local SafeParent = GetSafeParent()
-if SafeParent:FindFirstChild("V14_DeltaUI_Max") then SafeParent["V14_DeltaUI_Max"]:Destroy() end
+if SafeParent:FindFirstChild("V15_DeltaUI_Max") then SafeParent["V15_DeltaUI_Max"]:Destroy() end
 
 -- ==========================================
 -- 📚 DATABASE & BIẾN HỆ THỐNG
@@ -39,15 +39,13 @@ local IslandList = {
     "Territory", "Thriller Bark", "Tundra", "UnderWater Jail"
 }
 
-local _G_V14 = {
-    -- Farm
+local _G_V15 = {
     AutoFarmFree = false, FarmAll = false, SelectedMonsters = {}, ExcludedMobs = {"dummy", "test dmg", "testdmg"},
     AutoFarmLevel = false, ManualQuestFarm = false, SelectedManualQuest = nil, CurrentTargetMob = nil,
     AutoEquip = false, AutoClick = false, AutoSkill = false, AutoRepeatQuest = false,
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
     SelectedWeapon = nil, SelectedFruit = nil, SelectedSpawnPoint = nil,
     AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
-    -- Player & Server
     EnableSpeed = false, WalkSpeed = 50, EnableJump = false, JumpPower = 100, InfJump = false, DashNoCD = false,
     AutoSaveConfig = false, AntiAFK = false
 }
@@ -55,17 +53,17 @@ local _G_V14 = {
 -- ==========================================
 -- HỆ THỐNG LƯU CẤU HÌNH (SAVE / LOAD)
 -- ==========================================
-local ConfigFolder = "DeltaV14_Configs"
+local ConfigFolder = "DeltaV15_Configs"
 if isfolder and not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
 
 local function SaveConfig(name)
     if not writefile then return end
-    writefile(ConfigFolder.."/"..name..".json", HttpService:JSONEncode(_G_V14))
+    writefile(ConfigFolder.."/"..name..".json", HttpService:JSONEncode(_G_V15))
 end
 local function LoadConfig(name)
     if not readfile or not isfile(ConfigFolder.."/"..name..".json") then return end
     local decoded = HttpService:JSONDecode(readfile(ConfigFolder.."/"..name..".json"))
-    for k, v in pairs(decoded) do _G_V14[k] = v end
+    for k, v in pairs(decoded) do _G_V15[k] = v end
 end
 local function GetConfigsList()
     local list = {}
@@ -79,9 +77,9 @@ end
 -- GIAO DIỆN CHÍNH & NÚT ẨN BÊN NGOÀI
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
-ScreenGui.Name = "V14_DeltaUI_Max"; ScreenGui.ResetOnSpawn = false
+ScreenGui.Name = "V15_DeltaUI_Max"; ScreenGui.ResetOnSpawn = false
 
--- NÚT BẬT TẮT MENU (HÌNH VUÔNG BÊN TRÁI)
+-- NÚT BẬT TẮT MENU (NÚT NỔI)
 local ToggleMenuBtn = Instance.new("TextButton", ScreenGui)
 ToggleMenuBtn.Size = UDim2.new(0, 45, 0, 45); ToggleMenuBtn.Position = UDim2.new(0, 10, 0.5, -22)
 ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255); ToggleMenuBtn.Text = "Mở"
@@ -105,7 +103,7 @@ FixCorner.Size = UDim2.new(1, 0, 0, 10); FixCorner.Position = UDim2.new(0, 0, 1,
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V14 (Ultimate Full Fix)"
+Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V15 (Full Restore V10 & Box UI)"
 Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
 local MinBtn = Instance.new("TextButton", TopBar)
@@ -116,18 +114,13 @@ local CloseBtn = Instance.new("TextButton", TopBar)
 CloseBtn.Size = UDim2.new(0, 40, 0, 35); CloseBtn.Position = UDim2.new(1, -40, 0, 0); CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "X"; CloseBtn.TextColor3 = Color3.fromRGB(255, 50, 50); CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.TextSize = 18
 
--- Logic Nút Ẩn Hiện
 ToggleMenuBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
     ToggleMenuBtn.Text = MainFrame.Visible and "Ẩn" or "Mở"
 end)
-MinBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    ToggleMenuBtn.Text = "Mở"
-end)
+MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false; ToggleMenuBtn.Text = "Mở" end)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- CHIA 2 CỘT TABS
 local TabsFrame = Instance.new("ScrollingFrame", MainFrame)
 TabsFrame.Name = "TabsFrame"; TabsFrame.Size = UDim2.new(0.22, 0, 1, -35); TabsFrame.Position = UDim2.new(0, 0, 0, 35)
 TabsFrame.BackgroundTransparency = 1; TabsFrame.ScrollBarThickness = 2; TabsFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
@@ -140,7 +133,7 @@ ContentFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ContentFrame.Backgro
 Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 8)
 
 -- ==========================================
--- HÀM TẠO UI BỐ CỤC HỘP
+-- HÀM TẠO UI BỐ CỤC HỘP (TỪ V11/12/14)
 -- ==========================================
 local Pages = {}
 local function CreateTab(name)
@@ -198,16 +191,16 @@ local function CreateToggleSwitch(parent, text, varName)
     Lbl.Text = text; Lbl.TextColor3 = Color3.fromRGB(255, 255, 255); Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 12; Lbl.TextXAlignment = Enum.TextXAlignment.Left
     local SwitchBG = Instance.new("TextButton", Frame)
     SwitchBG.Size = UDim2.new(0, 36, 0, 18); SwitchBG.Position = UDim2.new(1, -45, 0.5, -9)
-    SwitchBG.BackgroundColor3 = _G_V14[varName] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(100, 100, 100); SwitchBG.Text = ""
+    SwitchBG.BackgroundColor3 = _G_V15[varName] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(100, 100, 100); SwitchBG.Text = ""
     Instance.new("UICorner", SwitchBG).CornerRadius = UDim.new(1, 0)
     local Knob = Instance.new("Frame", SwitchBG)
-    Knob.Size = UDim2.new(0, 14, 0, 14); Knob.Position = _G_V14[varName] and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    Knob.Size = UDim2.new(0, 14, 0, 14); Knob.Position = _G_V15[varName] and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
     Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
     SwitchBG.MouseButton1Click:Connect(function()
-        _G_V14[varName] = not _G_V14[varName]
-        if _G_V14[varName] then
+        _G_V15[varName] = not _G_V15[varName]
+        if _G_V15[varName] then
             SwitchBG.BackgroundColor3 = Color3.fromRGB(0, 200, 100); Knob:TweenPosition(UDim2.new(1, -16, 0.5, -7), "Out", "Quad", 0.2, true)
         else
             SwitchBG.BackgroundColor3 = Color3.fromRGB(100, 100, 100); Knob:TweenPosition(UDim2.new(0, 2, 0.5, -7), "Out", "Quad", 0.2, true)
@@ -237,11 +230,11 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
             Btn.Text = item; Btn.Font = Enum.Font.Gotham; Btn.TextSize = 11
             Btn.MouseButton1Click:Connect(function()
                 if multiSelect then
-                    local idx = table.find(_G_V14[globalVar], item)
-                    if idx then table.remove(_G_V14[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-                    else table.insert(_G_V14[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
+                    local idx = table.find(_G_V15[globalVar], item)
+                    if idx then table.remove(_G_V15[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+                    else table.insert(_G_V15[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
                 else
-                    _G_V14[globalVar] = item; MainBtn.Text = "  " .. title .. ": " .. item; Frame.Size = UDim2.new(1, -10, 0, 35)
+                    _G_V15[globalVar] = item; MainBtn.Text = "  " .. title .. ": " .. item; Frame.Size = UDim2.new(1, -10, 0, 35)
                 end
             end)
         end
@@ -264,14 +257,14 @@ local function CreateSlider(parent, name, min, max, globalVar)
     Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
     local Lbl = Instance.new("TextLabel", Frame)
     Lbl.Size = UDim2.new(1, 0, 0, 20); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1
-    Lbl.Text = name .. ": " .. _G_V14[globalVar]; Lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Lbl.Text = name .. ": " .. _G_V15[globalVar]; Lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 12; Lbl.TextXAlignment = Enum.TextXAlignment.Left
     
     local SliderBG = Instance.new("TextButton", Frame)
     SliderBG.Size = UDim2.new(0.95, 0, 0, 8); SliderBG.Position = UDim2.new(0.025, 0, 0, 25); SliderBG.BackgroundColor3 = Color3.fromRGB(60, 60, 65); SliderBG.Text = ""
     Instance.new("UICorner", SliderBG)
     local Fill = Instance.new("Frame", SliderBG)
-    Fill.Size = UDim2.new((_G_V14[globalVar] - min)/(max - min), 0, 1, 0); Fill.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+    Fill.Size = UDim2.new((_G_V15[globalVar] - min)/(max - min), 0, 1, 0); Fill.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
     Instance.new("UICorner", Fill)
 
     local Dragging = false
@@ -282,7 +275,7 @@ local function CreateSlider(parent, name, min, max, globalVar)
             local pos = math.clamp((input.Position.X - SliderBG.AbsolutePosition.X) / SliderBG.AbsoluteSize.X, 0, 1)
             Fill.Size = UDim2.new(pos, 0, 1, 0)
             local val = math.floor(min + (max - min) * pos)
-            _G_V14[globalVar] = val; Lbl.Text = name .. ": " .. val
+            _G_V15[globalVar] = val; Lbl.Text = name .. ": " .. val
         end
     end)
 end
@@ -299,10 +292,10 @@ local function CreateTextBox(parent, placeholder, callback)
 end
 
 -- ==========================================
--- XÂY DỰNG TABS GOM NHÓM
+-- XÂY DỰNG TABS ĐẢM BẢO CHỨA 100% NÚT V10
 -- ==========================================
 local TabFarmL, TabFarmR = CreateTab("⚔️ Auto Farm")
-local TabControlL, TabControlR = CreateTab("⚙️ Skill & Vũ Khí")
+local TabControlL, TabControlR = CreateTab("⚙️ Kỹ Năng & Vũ Khí")
 local TabPlayerL, TabPlayerR = CreateTab("🏃 Nhân Vật & Server")
 local TabIslandL, TabIslandR = CreateTab("🏝️ Đảo & Trái Cây")
 
@@ -310,7 +303,7 @@ Pages["⚔️ Auto Farm"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 Pages["⚔️ Auto Farm"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Pages["⚔️ Auto Farm"].Page.Visible = true
 
--- --- TAB 1: AUTO FARM ---
+-- --- TAB 1: AUTO FARM (TẤT CẢ NÚT V10) ---
 local GrpFree = CreateGroupBox(TabFarmL, "Farm Tùy Chọn (Free Farm)")
 local DropMonsters = CreateDropdown(GrpFree, "Chọn Quái (Multi)", {}, "SelectedMonsters", true)
 CreateButton(GrpFree, "🔍 Quét Toàn Bộ Quái Map", function()
@@ -318,7 +311,7 @@ CreateButton(GrpFree, "🔍 Quét Toàn Bộ Quái Map", function()
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
             local isEx = false
-            for _, ex in pairs(_G_V14.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true; break end end
+            for _, ex in pairs(_G_V15.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true; break end end
             if not isEx and not table.find(mobs, v.Name) then table.insert(mobs, v.Name) end
         end
     end
@@ -336,11 +329,14 @@ CreateToggleSwitch(GrpLevel, "Bật Auto Farm Level", "AutoFarmLevel")
 CreateDropdown(GrpLevel, "Chọn Quest Thủ Công", QuestListNames, "SelectedManualQuest", false)
 CreateToggleSwitch(GrpLevel, "Bật Đánh Quest Đã Chọn", "ManualQuestFarm")
 
--- --- TAB 2: SKILL & VŨ KHÍ ---
+-- --- TAB 2: KỸ NĂNG & VŨ KHÍ ---
 local GrpSkill = CreateGroupBox(TabControlL, "Kỹ Năng (Auto Skill)")
 CreateToggleSwitch(GrpSkill, "Kích Hoạt Dùng Skill", "AutoSkill")
-CreateToggleSwitch(GrpSkill, "Phím Z", "Skill_Z"); CreateToggleSwitch(GrpSkill, "Phím X", "Skill_X")
-CreateToggleSwitch(GrpSkill, "Phím C", "Skill_C"); CreateToggleSwitch(GrpSkill, "Phím V", "Skill_V"); CreateToggleSwitch(GrpSkill, "Phím F", "Skill_F")
+CreateToggleSwitch(GrpSkill, "Phím Z", "Skill_Z")
+CreateToggleSwitch(GrpSkill, "Phím X", "Skill_X")
+CreateToggleSwitch(GrpSkill, "Phím C", "Skill_C")
+CreateToggleSwitch(GrpSkill, "Phím V", "Skill_V")
+CreateToggleSwitch(GrpSkill, "Phím F", "Skill_F")
 
 local GrpSet = CreateGroupBox(TabControlR, "Cài Đặt Đánh & Trang Bị")
 CreateToggleSwitch(GrpSet, "Tự Động Đánh (Auto Click)", "AutoClick")
@@ -365,7 +361,7 @@ CreateToggleSwitch(GrpSpeed, "Hack Nhảy Cao", "EnableJump")
 CreateSlider(GrpSpeed, "Chỉnh Lực Nhảy", 50, 300, "JumpPower")
 CreateToggleSwitch(GrpSpeed, "Nhảy Vô Hạn (Inf Jump)", "InfJump")
 
-local GrpServer = CreateGroupBox(TabPlayerR, "Hệ Thống Server & Lưu Cấu Hình")
+local GrpServer = CreateGroupBox(TabPlayerR, "Hệ Thống Server & Lưu Config")
 CreateToggleSwitch(GrpServer, "Bảo Vệ Chống Văng (Anti-AFK)", "AntiAFK")
 CreateButton(GrpServer, "♻️ Rejoin (Vào Lại Server Cũ)", function() TPS:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
 CreateButton(GrpServer, "🌐 Hop Server Ngẫu Nhiên", function()
@@ -395,7 +391,7 @@ local ConfigNameInput = "Config_1"
 local DropConfigs = CreateDropdown(GrpServer, "Chọn Bản Lưu", GetConfigsList(), "SelectedConfig", false)
 CreateTextBox(GrpServer, "Nhập tên bản lưu mới", function(text) ConfigNameInput = text end)
 CreateButton(GrpServer, "💾 Lưu Cấu Hình", function() SaveConfig(ConfigNameInput); DropConfigs(GetConfigsList()) end)
-CreateButton(GrpServer, "📂 Tải Cấu Hình Đã Chọn", function() if _G_V14.SelectedConfig then LoadConfig(_G_V14.SelectedConfig) end end)
+CreateButton(GrpServer, "📂 Tải Cấu Hình Đã Chọn", function() if _G_V15.SelectedConfig then LoadConfig(_G_V15.SelectedConfig) end end)
 
 -- --- TAB 4: ĐẢO & TRÁI CÂY ---
 local function TweenToSafe(targetCFrame)
@@ -403,7 +399,7 @@ local function TweenToSafe(targetCFrame)
     if not HRP then return end
     local BV = Instance.new("BodyVelocity")
     BV.MaxForce = Vector3.new(9e9, 9e9, 9e9); BV.Velocity = Vector3.new(0, 0, 0); BV.Parent = HRP
-    local time = (HRP.Position - targetCFrame.Position).Magnitude / _G_V14.FlySpeed
+    local time = (HRP.Position - targetCFrame.Position).Magnitude / _G_V15.FlySpeed
     local tween = TweenService:Create(HRP, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = targetCFrame + Vector3.new(0, 5, 0)})
     tween:Play(); tween.Completed:Wait()
     HRP.Anchored = true; task.wait(0.5); HRP.Anchored = false; BV:Destroy()
@@ -428,7 +424,7 @@ local function LoadSpawnPoints()
 end
 LoadSpawnPoints()
 
-local GrpFruit = CreateGroupBox(TabIslandR, "Trái Cây Rơi Tự Do (Fruits)")
+local GrpFruit = CreateGroupBox(TabIslandR, "Trái Cây (Fruits & Status)")
 local DropFruits = CreateDropdown(GrpFruit, "Chọn Trái Cây", {}, "SelectedFruit", false)
 CreateButton(GrpFruit, "🍎 Quét Trái Cây Toàn Map", function()
     local fruits = {}
@@ -440,9 +436,9 @@ CreateButton(GrpFruit, "🍎 Quét Trái Cây Toàn Map", function()
     DropFruits(fruits)
 end)
 CreateButton(GrpFruit, "🚀 Bay Đến Trái Đã Chọn", function()
-    if not _G_V14.SelectedFruit then return end
+    if not _G_V15.SelectedFruit then return end
     for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == _G_V14.SelectedFruit then
+        if v.Name == _G_V15.SelectedFruit then
             local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
             if targetPart then TweenToSafe(targetPart.CFrame) break end
         end
@@ -476,16 +472,16 @@ end)
 -- ENGINE LÕI (HOẠT ĐỘNG CHUẨN 100% CỦA V10)
 -- ==========================================
 LocalPlayer.Idled:Connect(function()
-    if _G_V14.AntiAFK then VIM:SendKeyEvent(true, Enum.KeyCode.Space, false, game); task.wait(0.5); VIM:SendKeyEvent(false, Enum.KeyCode.Space, false, game) end
+    if _G_V15.AntiAFK then VIM:SendKeyEvent(true, Enum.KeyCode.Space, false, game); task.wait(0.5); VIM:SendKeyEvent(false, Enum.KeyCode.Space, false, game) end
 end)
 
 UIS.JumpRequest:Connect(function()
-    if _G_V14.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
+    if _G_V15.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
 end)
 
 UIS.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if _G_V14.DashNoCD and input.KeyCode == Enum.KeyCode.Q then
+    if _G_V15.DashNoCD and input.KeyCode == Enum.KeyCode.Q then
         local HRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if HRP then
             local bv = Instance.new("BodyVelocity")
@@ -500,10 +496,10 @@ RunService.Stepped:Connect(function()
     if char then
         local hum = char:FindFirstChild("Humanoid")
         if hum then
-            if _G_V14.EnableSpeed then hum.WalkSpeed = _G_V14.WalkSpeed end
-            if _G_V14.EnableJump then hum.UseJumpPower = true; hum.JumpPower = _G_V14.JumpPower end
+            if _G_V15.EnableSpeed then hum.WalkSpeed = _G_V15.WalkSpeed end
+            if _G_V15.EnableJump then hum.UseJumpPower = true; hum.JumpPower = _G_V15.JumpPower end
         end
-        if _G_V14.AutoFarmLevel or _G_V14.ManualQuestFarm or _G_V14.AutoFarmFree or _G_V14.FarmAll then
+        if _G_V15.AutoFarmLevel or _G_V15.ManualQuestFarm or _G_V15.AutoFarmFree or _G_V15.FarmAll then
             for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         end
     end
@@ -548,32 +544,32 @@ task.spawn(function()
         if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
         local HRP = char.HumanoidRootPart
 
-        _G_V14.CurrentTargetMob = nil
-        if _G_V14.AutoFarmLevel then
-            local mob, qName = GetMobForCurrentLevel(); _G_V14.CurrentTargetMob = {mob}; LblInfo.Text = "Farm Level: " .. qName
-        elseif _G_V14.ManualQuestFarm and _G_V14.SelectedManualQuest then
-            for _, v in pairs(QuestDB) do if v.QuestName == _G_V14.SelectedManualQuest then _G_V14.CurrentTargetMob = {v.MobName}; LblInfo.Text = "Farm Thủ Công: " .. v.QuestName end end
-        elseif _G_V14.AutoFarmFree and #_G_V14.SelectedMonsters > 0 then
-            _G_V14.CurrentTargetMob = _G_V14.SelectedMonsters; LblInfo.Text = "Đang Farm Tự Do"
-        elseif _G_V14.FarmAll then LblInfo.Text = "Đang Càn Quét (Farm All)"
+        _G_V15.CurrentTargetMob = nil
+        if _G_V15.AutoFarmLevel then
+            local mob, qName = GetMobForCurrentLevel(); _G_V15.CurrentTargetMob = {mob}; LblInfo.Text = "Farm Level: " .. qName
+        elseif _G_V15.ManualQuestFarm and _G_V15.SelectedManualQuest then
+            for _, v in pairs(QuestDB) do if v.QuestName == _G_V15.SelectedManualQuest then _G_V15.CurrentTargetMob = {v.MobName}; LblInfo.Text = "Farm Thủ Công: " .. v.QuestName end end
+        elseif _G_V15.AutoFarmFree and #_G_V15.SelectedMonsters > 0 then
+            _G_V15.CurrentTargetMob = _G_V15.SelectedMonsters; LblInfo.Text = "Đang Farm Tự Do"
+        elseif _G_V15.FarmAll then LblInfo.Text = "Đang Càn Quét (Farm All)"
         else LblInfo.Text = "Đang rảnh rỗi..." end
 
-        if _G_V14.AutoRepeatQuest then RepeatQuestRemote() end
-        if _G_V14.AutoEquip and _G_V14.SelectedWeapon then
-            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V14.SelectedWeapon)
+        if _G_V15.AutoRepeatQuest then RepeatQuestRemote() end
+        if _G_V15.AutoEquip and _G_V15.SelectedWeapon then
+            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V15.SelectedWeapon)
             if wp then char.Humanoid:EquipTool(wp) end
         end
 
-        local isFarming = _G_V14.AutoFarmLevel or _G_V14.ManualQuestFarm or _G_V14.AutoFarmFree or _G_V14.FarmAll
+        local isFarming = _G_V15.AutoFarmLevel or _G_V15.ManualQuestFarm or _G_V15.AutoFarmFree or _G_V15.FarmAll
         if isFarming then
-            if _G_V14.AutoClick then
+            if _G_V15.AutoClick then
                 local equippedTool = char:FindFirstChildWhichIsA("Tool")
                 if equippedTool then equippedTool:Activate() end
             end
-            if _G_V14.AutoSkill then
-                if _G_V14.Skill_Z then PressKey("Z") end; if _G_V14.Skill_X then PressKey("X") end
-                if _G_V14.Skill_C then PressKey("C") end; if _G_V14.Skill_V then PressKey("V") end
-                if _G_V14.Skill_F then PressKey("F") end
+            if _G_V15.AutoSkill then
+                if _G_V15.Skill_Z then PressKey("Z") end; if _G_V15.Skill_X then PressKey("X") end
+                if _G_V15.Skill_C then PressKey("C") end; if _G_V15.Skill_V then PressKey("V") end
+                if _G_V15.Skill_F then PressKey("F") end
             end
             
             EnableAntiFall(HRP)
@@ -581,11 +577,11 @@ task.spawn(function()
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
                     local isValidTarget = false
-                    if _G_V14.FarmAll then
+                    if _G_V15.FarmAll then
                         local isEx = false
-                        for _, ex in pairs(_G_V14.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
+                        for _, ex in pairs(_G_V15.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
                         if not isEx then isValidTarget = true end
-                    elseif _G_V14.CurrentTargetMob and table.find(_G_V14.CurrentTargetMob, v.Name) then
+                    elseif _G_V15.CurrentTargetMob and table.find(_G_V15.CurrentTargetMob, v.Name) then
                         isValidTarget = true
                     end
                     if isValidTarget then
@@ -597,14 +593,14 @@ task.spawn(function()
 
             if targetMobInstance then
                 local mobPos = targetMobInstance.HumanoidRootPart.CFrame
-                local offset = CFrame.new(0, _G_V14.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
-                if _G_V14.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V14.AttackDistance)
-                elseif _G_V14.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V14.AttackDistance, 0) end
+                local offset = CFrame.new(0, _G_V15.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
+                if _G_V15.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V15.AttackDistance)
+                elseif _G_V15.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V15.AttackDistance, 0) end
                 
                 if shortestDist > 200 then
                     local BV = Instance.new("BodyVelocity")
                     BV.MaxForce = Vector3.new(9e9, 9e9, 9e9); BV.Velocity = Vector3.new(0, 0, 0); BV.Parent = HRP
-                    local time = shortestDist / _G_V14.FlySpeed
+                    local time = shortestDist / _G_V15.FlySpeed
                     local tween = TweenService:Create(HRP, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = (mobPos * offset) + Vector3.new(0, 5, 0)})
                     tween:Play(); tween.Completed:Wait(); BV:Destroy()
                 else 
