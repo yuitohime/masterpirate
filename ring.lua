@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V10 - ULTIMATE (REDESIGN, FREE FLY, FIX SPEED, SETTINGS MERGE)
+-- DELTA UI V10 - ULTIMATE (FIX FLY STUCK, AUTO HAKI/KEN ADDED)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -44,6 +44,7 @@ local _G_V10 = {
     AutoFarmLevel = false, ManualQuestFarm = false, SelectedManualQuest = nil, CurrentTargetMob = nil,
     AutoEquip = false, AutoClick = false, AutoSkill = false, AutoRepeatQuest = false,
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
+    AutoHaki = false, AutoKen = false, -- Thêm biến Auto Haki / Ken
     SelectedWeapon = nil, SelectedFruit = nil,
     AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
     SelectedIsland = nil, SelectedSpawnPoint = nil,
@@ -82,23 +83,18 @@ local function GetConfigsList()
 end
 
 -- ==========================================
--- GIAO DIỆN CHÍNH (ĐÃ LÀM ĐẸP LẠI)
+-- GIAO DIỆN CHÍNH
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
 ScreenGui.Name = "V10_DeltaUI_Max"; ScreenGui.ResetOnSpawn = false
 
--- NÚT VUÔNG BÊN TRÁI ĐỂ ẨN/HIỆN MENU
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
-ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
-ToggleBtn.Position = UDim2.new(0, 20, 0.5, -20)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-ToggleBtn.Text = "🔮"
-ToggleBtn.TextColor3 = Color3.fromRGB(0, 200, 255)
-ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 20
+ToggleBtn.Size = UDim2.new(0, 40, 0, 40); ToggleBtn.Position = UDim2.new(0, 20, 0.5, -20)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ToggleBtn.Text = "🔮"
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 200, 255); ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 20
 ToggleBtn.Active = true; ToggleBtn.Draggable = true
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
-Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(0, 180, 255)
-Instance.new("UIStroke", ToggleBtn).Thickness = 1.5
+Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(0, 180, 255); Instance.new("UIStroke", ToggleBtn).Thickness = 1.5
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 650, 0, 420); MainFrame.Position = UDim2.new(0.5, -325, 0.5, -210)
@@ -143,7 +139,7 @@ Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", ContentFrame).Color = Color3.fromRGB(40, 40, 50)
 
 -- ==========================================
--- HÀM TẠO UI COMPONENTS ĐẸP
+-- HÀM TẠO UI COMPONENTS
 -- ==========================================
 local Pages = {}
 local function CreateTab(name, icon)
@@ -166,11 +162,9 @@ local function CreateTab(name, icon)
         for n, p in pairs(Pages) do
             p.Page.Visible = (n == name)
             if n == name then
-                p.Btn.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
-                p.Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                p.Btn.BackgroundColor3 = Color3.fromRGB(0, 140, 255); p.Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             else
-                p.Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
-                p.Btn.TextColor3 = Color3.fromRGB(180, 180, 180)
+                p.Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 38); p.Btn.TextColor3 = Color3.fromRGB(180, 180, 180)
             end
         end
     end)
@@ -297,7 +291,7 @@ local TabAutoLevel = CreateTab("Farm Level", "🌟")
 local TabFreeFarm = CreateTab("Farm Quái", "⚔️")
 local TabIsland = CreateTab("Dịch Chuyển", "🏝️")
 local TabPlayer = CreateTab("Nhân Vật", "🏃")
-local TabSkills = CreateTab("Vũ Khí & Skill", "⚡")
+local TabSkills = CreateTab("Kỹ Năng & Vũ Khí", "⚡")
 local TabMisc = CreateTab("Trái Cây & Nhạc", "🍎")
 local TabSettings = CreateTab("Cài Đặt Chung", "⚙️")
 
@@ -368,7 +362,7 @@ CreateButton(TabIsland, "🚀 Bay Đến Dịch Chuyển Đã Chọn", function(
     end
 end)
 
--- --- TAB: NHÂN VẬT (Bao gồm Tốc Độ, Nhảy, Free Fly) ---
+-- --- TAB: NHÂN VẬT ---
 CreateToggleSwitch(TabPlayer, "Bật Hack Tốc Độ Chạy (Bypass)", "EnableSpeed")
 CreateSlider(TabPlayer, "Tốc Độ Chạy (WalkSpeed)", 16, 300, "WalkSpeed")
 CreateToggleSwitch(TabPlayer, "Bật Hack Nhảy Cao (Bypass)", "EnableJump")
@@ -379,6 +373,9 @@ CreateToggleSwitch(TabPlayer, "🚀 Bay Tự Do (W,A,S,D + Space/Ctrl)", "FreeFl
 CreateSlider(TabPlayer, "Tốc Độ Bay Tự Do", 50, 500, "FreeFlySpeed")
 
 -- --- TAB: KỸ NĂNG & VŨ KHÍ ---
+CreateToggleSwitch(TabSkills, "🔥 Bật Tự Động Haki (Auto Haki liên tục)", "AutoHaki")
+CreateToggleSwitch(TabSkills, "👁️ Bật Tự Động Ken (Kenbunshoku liên tục)", "AutoKen")
+
 local DropWeapons = CreateDropdown(TabSkills, "Chọn Vũ Khí", {}, "SelectedWeapon", false)
 CreateButton(TabSkills, "🎒 Quét Vũ Khí", function()
     local weps = {}
@@ -428,7 +425,7 @@ CreateTextBox(TabMisc, "Nhập ID Nhạc (VD: 142376088)", function(text) inputM
 CreateButton(TabMisc, "▶️ Phát Nhạc", function() local id = string.match(inputMusicID, "%d+"); if id then MusicPlayer.SoundId = "rbxassetid://"..id; MusicPlayer:Play() end end)
 CreateButton(TabMisc, "⏸️ Dừng Nhạc", function() MusicPlayer:Stop() end)
 
--- --- TAB: CÀI ĐẶT CHUNG (GOM TẤT CẢ CONFIG) ---
+-- --- TAB: CÀI ĐẶT CHUNG ---
 CreateDropdown(TabSettings, "Kiểu Đánh (Vị trí)", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
 CreateSlider(TabSettings, "Khoảng Cách Đánh", 5, 40, "AttackDistance")
 CreateSlider(TabSettings, "Tốc Độ Tween Của Bot", 100, 500, "FlySpeed")
@@ -462,8 +459,34 @@ CreateButton(TabSettings, "💾 Lưu Cấu Hình", function() SaveConfig(ConfigN
 CreateButton(TabSettings, "📂 Tải Cấu Hình Đã Chọn", function() if _G_V10.SelectedConfig then LoadConfig(_G_V10.SelectedConfig) end end)
 
 -- ==========================================
--- ENGINE LÕI (XỬ LÝ FLY, TỐC ĐỘ, AUTO FARM)
+-- ENGINE LÕI (AUTO HAKI, FLY, AUTO FARM)
 -- ==========================================
+
+-- AUTO HAKI / KEN (Liên tục gửi Remote bật Haki/Ken dựa trên dữ liệu Spy)
+task.spawn(function()
+    while task.wait(1) do
+        if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then continue end
+        if LocalPlayer.Character.Humanoid.Health <= 0 then continue end
+        
+        local rs = game:GetService("ReplicatedStorage")
+        
+        if _G_V10.AutoHaki then
+            pcall(function()
+                -- Thử tất cả các dạng cấu trúc Remote tìm thấy từ Spy cho Haki
+                if rs:FindFirstChild("Haki") then rs.Haki:FireServer("GTS", true, nil, true) end
+                if rs:FindFirstChild("MainRemote") then rs.MainRemote:FireServer("Haki", true) end
+            end)
+        end
+        
+        if _G_V10.AutoKen then
+            pcall(function()
+                -- Thử tất cả các dạng cấu trúc Remote tìm thấy từ Spy cho Ken
+                if rs:FindFirstChild("Ken") then rs.Ken:FireServer("GTS", true, nil, true) end
+                if rs:FindFirstChild("MainRemote") then rs.MainRemote:FireServer("Ken", true) end
+            end)
+        end
+    end
+end)
 
 -- Chống AFK
 LocalPlayer.Idled:Connect(function()
@@ -473,7 +496,7 @@ LocalPlayer.Idled:Connect(function()
     end
 end)
 
--- FIX TỐC ĐỘ & LỰC NHẢY (Chống Game Override)
+-- FIX TỐC ĐỘ & LỰC NHẢY
 task.spawn(function()
     while task.wait(0.5) do
         local char = LocalPlayer.Character
@@ -514,7 +537,7 @@ UIS.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- LOGIC BAY TỰ DO (FREE FLY)
+-- LÕI BAY TỰ DO (ĐÃ FIX LỖI ĐỨNG IM/ĐƠ NHÂN VẬT KHI TẮT BAY)
 local flyKeys = {W = 0, A = 0, S = 0, D = 0, Up = 0, Down = 0}
 UIS.InputBegan:Connect(function(k, gp)
     if gp then return end
@@ -549,13 +572,17 @@ RunService.RenderStepped:Connect(function()
 
         if _G_V10.FreeFly then
             hum.PlatformStand = true
-            if not FreeFlyBV then
-                FreeFlyBV = Instance.new("BodyVelocity", hrp)
+            if not hrp:FindFirstChild("V10_FreeFlyBV") then
+                FreeFlyBV = Instance.new("BodyVelocity")
+                FreeFlyBV.Name = "V10_FreeFlyBV"
                 FreeFlyBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                FreeFlyBV.Parent = hrp
             end
-            if not FreeFlyBG then
-                FreeFlyBG = Instance.new("BodyGyro", hrp)
+            if not hrp:FindFirstChild("V10_FreeFlyBG") then
+                FreeFlyBG = Instance.new("BodyGyro")
+                FreeFlyBG.Name = "V10_FreeFlyBG"
                 FreeFlyBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9); FreeFlyBG.P = 15000
+                FreeFlyBG.Parent = hrp
             end
             
             local cam = workspace.CurrentCamera
@@ -568,9 +595,13 @@ RunService.RenderStepped:Connect(function()
             FreeFlyBV.Velocity = moveVec * _G_V10.FreeFlySpeed
             FreeFlyBG.CFrame = cam.CFrame
         else
-            if FreeFlyBV then FreeFlyBV:Destroy(); FreeFlyBV = nil end
-            if FreeFlyBG then FreeFlyBG:Destroy(); FreeFlyBG = nil end
-            if hum.PlatformStand then hum.PlatformStand = false end
+            -- Clean-up triệt để tránh kẹt trạng thái
+            if hrp:FindFirstChild("V10_FreeFlyBV") then hrp["V10_FreeFlyBV"]:Destroy() end
+            if hrp:FindFirstChild("V10_FreeFlyBG") then hrp["V10_FreeFlyBG"]:Destroy() end
+            if hum.PlatformStand then 
+                hum.PlatformStand = false
+                hum:ChangeState(Enum.HumanoidStateType.Freefall) -- Ép rơi tự do (gỡ đơ vật lý)
+            end
         end
     end
 end)
@@ -632,7 +663,7 @@ task.spawn(function()
         end
 
         local isFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll
-        if isFarming and not _G_V10.FreeFly then -- Dừng farm nếu đang dùng FreeFly để không bị giật
+        if isFarming and not _G_V10.FreeFly then -- Dừng farm nếu đang dùng FreeFly
             if _G_V10.AutoClick then
                 local equippedTool = char:FindFirstChildWhichIsA("Tool")
                 if equippedTool then equippedTool:Activate() end
