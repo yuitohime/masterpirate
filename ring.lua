@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V10 - ULTIMATE (ORIGINAL UI + SMART HAKI/KEN VIRTUAL KEY + FLY FIX)
+-- DELTA UI V11 - ULTIMATE (DEEP REMOTE SEARCH + SMART HAKI/KEN + FLY FIX)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -16,7 +16,7 @@ local function GetSafeParent()
     return LocalPlayer:WaitForChild("PlayerGui")
 end
 local SafeParent = GetSafeParent()
-if SafeParent:FindFirstChild("V10_DeltaUI_Max") then SafeParent["V10_DeltaUI_Max"]:Destroy() end
+if SafeParent:FindFirstChild("V11_DeltaUI_Max") then SafeParent["V11_DeltaUI_Max"]:Destroy() end
 
 -- ==========================================
 -- 📚 DATABASE
@@ -38,7 +38,8 @@ local IslandList = {
     "Territory", "Thriller Bark", "Tundra", "UnderWater Jail"
 }
 
-local _G_V10 = {
+-- Biến toàn cục V11
+local _G_V11 = {
     AutoFarmFree = false, FarmAll = false, SelectedMonsters = {}, ExcludedMobs = {"dummy", "test dmg", "testdmg"},
     AutoFarmLevel = false, ManualQuestFarm = false, SelectedManualQuest = nil, CurrentTargetMob = nil,
     AutoEquip = false, AutoClick = false, AutoSkill = false, AutoRepeatQuest = false,
@@ -55,19 +56,19 @@ local _G_V10 = {
 -- ==========================================
 -- HỆ THỐNG LƯU CẤU HÌNH (SAVE / LOAD)
 -- ==========================================
-local ConfigFolder = "DeltaV10_Configs"
+local ConfigFolder = "DeltaV11_Configs"
 if isfolder and not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
 
 local function SaveConfig(name)
     if not writefile then return end
-    local json = HttpService:JSONEncode(_G_V10)
+    local json = HttpService:JSONEncode(_G_V11)
     writefile(ConfigFolder.."/"..name..".json", json)
 end
 
 local function LoadConfig(name)
     if not readfile or not isfile(ConfigFolder.."/"..name..".json") then return end
     local decoded = HttpService:JSONDecode(readfile(ConfigFolder.."/"..name..".json"))
-    for k, v in pairs(decoded) do _G_V10[k] = v end
+    for k, v in pairs(decoded) do _G_V11[k] = v end
 end
 
 local function GetConfigsList()
@@ -85,7 +86,7 @@ end
 -- GIAO DIỆN CHÍNH
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
-ScreenGui.Name = "V10_DeltaUI_Max"; ScreenGui.ResetOnSpawn = false
+ScreenGui.Name = "V11_DeltaUI_Max"; ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 620, 0, 420); MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
@@ -112,6 +113,7 @@ Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(0, 200, 255)
 ToggleBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
+------------------------------------------------
 
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 35); TopBar.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
@@ -121,7 +123,7 @@ FixCorner.Size = UDim2.new(1, 0, 0, 10); FixCorner.Position = UDim2.new(0, 0, 1,
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V10 (Ultimate Edition)"
+Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V11 (Ultimate Edition)"
 Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
 local MinBtn = Instance.new("TextButton", TopBar)
@@ -190,16 +192,16 @@ local function CreateToggleSwitch(parent, text, varName)
     
     local SwitchBG = Instance.new("TextButton", Frame)
     SwitchBG.Size = UDim2.new(0, 40, 0, 20); SwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
-    SwitchBG.BackgroundColor3 = _G_V10[varName] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(100, 100, 100); SwitchBG.Text = ""
+    SwitchBG.BackgroundColor3 = _G_V11[varName] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(100, 100, 100); SwitchBG.Text = ""
     Instance.new("UICorner", SwitchBG).CornerRadius = UDim.new(1, 0)
     local Knob = Instance.new("Frame", SwitchBG)
-    Knob.Size = UDim2.new(0, 16, 0, 16); Knob.Position = _G_V10[varName] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    Knob.Size = UDim2.new(0, 16, 0, 16); Knob.Position = _G_V11[varName] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
     Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
     SwitchBG.MouseButton1Click:Connect(function()
-        _G_V10[varName] = not _G_V10[varName]
-        if _G_V10[varName] then
+        _G_V11[varName] = not _G_V11[varName]
+        if _G_V11[varName] then
             SwitchBG.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
             Knob:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
         else
@@ -232,11 +234,11 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
             Btn.Text = item; Btn.Font = Enum.Font.Gotham; Btn.TextSize = 12
             Btn.MouseButton1Click:Connect(function()
                 if multiSelect then
-                    local idx = table.find(_G_V10[globalVar], item)
-                    if idx then table.remove(_G_V10[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-                    else table.insert(_G_V10[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
+                    local idx = table.find(_G_V11[globalVar], item)
+                    if idx then table.remove(_G_V11[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+                    else table.insert(_G_V11[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
                 else
-                    _G_V10[globalVar] = item; MainBtn.Text = "  " .. title .. ": " .. item; Frame.Size = UDim2.new(1, 0, 0, 35)
+                    _G_V11[globalVar] = item; MainBtn.Text = "  " .. title .. ": " .. item; Frame.Size = UDim2.new(1, 0, 0, 35)
                 end
             end)
         end
@@ -259,14 +261,14 @@ local function CreateSlider(parent, name, min, max, globalVar)
     Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
     local Lbl = Instance.new("TextLabel", Frame)
     Lbl.Size = UDim2.new(1, 0, 0, 20); Lbl.Position = UDim2.new(0, 5, 0, 0); Lbl.BackgroundTransparency = 1
-    Lbl.Text = name .. ": " .. _G_V10[globalVar]; Lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Lbl.Text = name .. ": " .. _G_V11[globalVar]; Lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 13; Lbl.TextXAlignment = Enum.TextXAlignment.Left
     
     local SliderBG = Instance.new("TextButton", Frame)
     SliderBG.Size = UDim2.new(0.95, 0, 0, 10); SliderBG.Position = UDim2.new(0.025, 0, 0, 25); SliderBG.BackgroundColor3 = Color3.fromRGB(60, 60, 65); SliderBG.Text = ""
     Instance.new("UICorner", SliderBG)
     local Fill = Instance.new("Frame", SliderBG)
-    Fill.Size = UDim2.new((_G_V10[globalVar] - min)/(max - min), 0, 1, 0); Fill.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+    Fill.Size = UDim2.new((_G_V11[globalVar] - min)/(max - min), 0, 1, 0); Fill.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
     Instance.new("UICorner", Fill)
 
     local Dragging = false
@@ -277,7 +279,7 @@ local function CreateSlider(parent, name, min, max, globalVar)
             local pos = math.clamp((input.Position.X - SliderBG.AbsolutePosition.X) / SliderBG.AbsoluteSize.X, 0, 1)
             Fill.Size = UDim2.new(pos, 0, 1, 0)
             local val = math.floor(min + (max - min) * pos)
-            _G_V10[globalVar] = val; Lbl.Text = name .. ": " .. val
+            _G_V11[globalVar] = val; Lbl.Text = name .. ": " .. val
         end
     end)
 end
@@ -327,7 +329,7 @@ CreateButton(TabFreeFarm, "🔍 Quét Quái (Toàn bộ Map)", function()
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
             local isEx = false
-            for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true; break end end
+            for _, ex in pairs(_G_V11.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true; break end end
             if not isEx and not table.find(mobs, v.Name) then table.insert(mobs, v.Name) end
         end
     end
@@ -347,15 +349,15 @@ CreateButton(TabIsland, "🔄 Cập nhật danh sách Điểm Hồi Sinh", funct
     table.sort(sp); DropSpawnPoints(sp)
 end)
 
+-- Hàm Bay Fix Lỗi Rơi Nước
 local function TweenToSafe(targetCFrame)
     local HRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not HRP then return end
     
-    local safeY = math.max(targetCFrame.Y + 20, 100) 
     local BV = Instance.new("BodyVelocity")
     BV.MaxForce = Vector3.new(9e9, 9e9, 9e9); BV.Velocity = Vector3.new(0, 0, 0); BV.Parent = HRP
 
-    local time = (HRP.Position - targetCFrame.Position).Magnitude / _G_V10.FlySpeed
+    local time = (HRP.Position - targetCFrame.Position).Magnitude / _G_V11.FlySpeed
     local tween = TweenService:Create(HRP, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = targetCFrame + Vector3.new(0, 5, 0)})
     tween:Play(); tween.Completed:Wait()
     
@@ -366,22 +368,22 @@ local function TweenToSafe(targetCFrame)
 end
 
 CreateButton(TabIsland, "🚀 Bay Đến Đảo / Điểm Hồi Sinh", function()
-    if _G_V10.SelectedIsland then
-        local island = workspace:FindFirstChild("Island") and workspace.Island:FindFirstChild(_G_V10.SelectedIsland)
+    if _G_V11.SelectedIsland then
+        local island = workspace:FindFirstChild("Island") and workspace.Island:FindFirstChild(_G_V11.SelectedIsland)
         if island then
             local part = island:IsA("Model") and (island.PrimaryPart or island:FindFirstChildWhichIsA("BasePart")) or island
             if part then TweenToSafe(part.CFrame) end
         end
-    elseif _G_V10.SelectedSpawnPoint then
-        local sp = workspace:FindFirstChild("SetSpawnPoints") and workspace.SetSpawnPoints:FindFirstChild(_G_V10.SelectedSpawnPoint)
+    elseif _G_V11.SelectedSpawnPoint then
+        local sp = workspace:FindFirstChild("SetSpawnPoints") and workspace.SetSpawnPoints:FindFirstChild(_G_V11.SelectedSpawnPoint)
         if sp then TweenToSafe(sp.CFrame) end
     end
 end)
 
 -- --- TAB: NHÂN VẬT ---
-CreateToggleSwitch(TabPlayer, "Bật Hack Tốc Độ Chạy", "EnableSpeed")
+CreateToggleSwitch(TabPlayer, "Bật Hack Tốc Độ Chạy (Bypass)", "EnableSpeed")
 CreateSlider(TabPlayer, "Tốc Độ Chạy (WalkSpeed)", 16, 250, "WalkSpeed")
-CreateToggleSwitch(TabPlayer, "Bật Hack Nhảy Cao", "EnableJump")
+CreateToggleSwitch(TabPlayer, "Bật Hack Nhảy Cao (Bypass)", "EnableJump")
 CreateSlider(TabPlayer, "Lực Nhảy (JumpPower)", 50, 300, "JumpPower")
 CreateToggleSwitch(TabPlayer, "Nhảy Vô Hạn (Infinity Jump)", "InfJump")
 CreateToggleSwitch(TabPlayer, "Lướt Không Hồi Chiêu (Dash No CD)", "DashNoCD")
@@ -420,7 +422,7 @@ CreateButton(TabConfig, "💾 Lưu Bản Hiện Tại", function()
     DropConfigs(GetConfigsList())
 end)
 CreateButton(TabConfig, "📂 Tải (Load) Bản Đã Chọn", function()
-    if _G_V10.SelectedConfig then LoadConfig(_G_V10.SelectedConfig) end
+    if _G_V11.SelectedConfig then LoadConfig(_G_V11.SelectedConfig) end
 end)
 CreateToggleSwitch(TabConfig, "Auto Lưu/Tải (Chưa khả dụng tùy thiết bị)", "AutoSaveConfig")
 
@@ -478,9 +480,9 @@ CreateButton(TabFruit, "🍎 Quét Trái Cây", function()
     DropFruits(fruits)
 end)
 CreateButton(TabFruit, "🚀 Bay Đến Trái Đã Chọn", function()
-    if not _G_V10.SelectedFruit then return end
+    if not _G_V11.SelectedFruit then return end
     for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == _G_V10.SelectedFruit then
+        if v.Name == _G_V11.SelectedFruit then
             local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
             if targetPart then TweenToSafe(targetPart.CFrame) break end
         end
@@ -503,40 +505,51 @@ CreateButton(TabMusic, "▶️ Phát Nhạc", function() local id = string.match
 CreateButton(TabMusic, "⏸️ Dừng Nhạc", function() MusicPlayer:Stop() end)
 
 -- ==========================================
--- ENGINE LÕI
+-- ENGINE LÕI V11 (DEEP SEARCH HAKI/KEN, FLY FIX, SPEED FIX)
 -- ==========================================
-local function PressKey(key)
-    VIM:SendKeyEvent(true, Enum.KeyCode[key], false, game)
-    task.wait(0.1)
-    VIM:SendKeyEvent(false, Enum.KeyCode[key], false, game)
-end
 
--- AUTO HAKI / KEN (SMART VIRTUAL KEYPRESS)
+-- AUTO HAKI / KEN (Sử dụng Quét Đệ Quy FindFirstChild(name, true) để móc tận cùng thư mục)
 task.spawn(function()
-    while task.wait(1) do
+    while task.wait(0.5) do
         local char = LocalPlayer.Character
-        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-            
-            if _G_V10.AutoHaki then
+        if not char or not char:FindFirstChild("Humanoid") then continue end
+        if char.Humanoid.Health <= 0 then continue end
+        
+        local rs = game:GetService("ReplicatedStorage")
+        
+        if _G_V11.AutoHaki then
+            pcall(function()
                 if not char:FindFirstChild("Haki") then
-                    PressKey("J")
+                    local r1 = rs:FindFirstChild("RemoteEvent", true)
+                    if r1 then r1:FireServer("GTS", true, nil, true) end
+                    
+                    local r2 = rs:FindFirstChild("Haki", true)
+                    if r2 then r2:FireServer("GTS", true, nil, true) end
+                    
+                    local r3 = rs:FindFirstChild("MainRemote", true)
+                    if r3 then r3:FireServer("Haki", true) end
                 end
-            end
-            
-            if _G_V10.AutoKen then
+            end)
+        end
+        
+        if _G_V11.AutoKen then
+            pcall(function()
                 local kenNode = char:FindFirstChild("Ken")
                 if not kenNode or (kenNode and kenNode:FindFirstChild("Close")) then
-                    PressKey("K")
+                    local k1 = rs:FindFirstChild("Ken", true)
+                    if k1 then k1:FireServer("GTS", true, nil, true) end
+                    
+                    local k2 = rs:FindFirstChild("MainRemote", true)
+                    if k2 then k2:FireServer("Ken", true) end
                 end
-            end
-            
+            end)
         end
     end
 end)
 
 -- ANTI AFK MẠNH MẼ
 LocalPlayer.Idled:Connect(function()
-    if _G_V10.AntiAFK then
+    if _G_V11.AntiAFK then
         VIM:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
         task.wait(0.5)
         VIM:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
@@ -552,29 +565,29 @@ task.spawn(function()
             if hum and not hum:GetAttribute("HooksAdded") then
                 hum:SetAttribute("HooksAdded", true)
                 hum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-                    if _G_V10.EnableSpeed then hum.WalkSpeed = _G_V10.WalkSpeed end
+                    if _G_V11.EnableSpeed then hum.WalkSpeed = _G_V11.WalkSpeed end
                 end)
                 hum:GetPropertyChangedSignal("JumpPower"):Connect(function()
-                    if _G_V10.EnableJump then hum.JumpPower = _G_V10.JumpPower end
+                    if _G_V11.EnableJump then hum.JumpPower = _G_V11.JumpPower end
                 end)
             end
             if hum then
-                if _G_V10.EnableSpeed then hum.WalkSpeed = _G_V10.WalkSpeed end
-                if _G_V10.EnableJump then hum.UseJumpPower = true; hum.JumpPower = _G_V10.JumpPower end
+                if _G_V11.EnableSpeed then hum.WalkSpeed = _G_V11.WalkSpeed end
+                if _G_V11.EnableJump then hum.UseJumpPower = true; hum.JumpPower = _G_V11.JumpPower end
             end
         end
     end
 end)
 
 UIS.JumpRequest:Connect(function()
-    if _G_V10.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+    if _G_V11.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
 end)
 
 UIS.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if _G_V10.DashNoCD and input.KeyCode == Enum.KeyCode.Q then
+    if _G_V11.DashNoCD and input.KeyCode == Enum.KeyCode.Q then
         local HRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if HRP then
             local bv = Instance.new("BodyVelocity")
@@ -584,7 +597,7 @@ UIS.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- LÕI BAY TỰ DO (FIX ĐỨNG ĐƠ BẰNG GETTINGUP STATE)
+-- LÕI BAY TỰ DO (FIX ĐỨNG ĐƠ SAU KHI TẮT BẰNG GETTINGUP STATE)
 local flyKeys = {W = 0, A = 0, S = 0, D = 0, Up = 0, Down = 0}
 UIS.InputBegan:Connect(function(k, gp)
     if gp then return end
@@ -611,20 +624,20 @@ RunService.RenderStepped:Connect(function()
         local hrp = char.HumanoidRootPart
         local hum = char.Humanoid
         
-        if _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll then
+        if _G_V11.AutoFarmLevel or _G_V11.ManualQuestFarm or _G_V11.AutoFarmFree or _G_V11.FarmAll then
             for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         end
 
-        if _G_V10.FreeFly then
+        if _G_V11.FreeFly then
             hum:ChangeState(Enum.HumanoidStateType.Physics)
-            if not hrp:FindFirstChild("V10_FreeFlyBV") then
+            if not hrp:FindFirstChild("V11_FreeFlyBV") then
                 local bv = Instance.new("BodyVelocity", hrp)
-                bv.Name = "V10_FreeFlyBV"
+                bv.Name = "V11_FreeFlyBV"
                 bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
             end
-            if not hrp:FindFirstChild("V10_FreeFlyBG") then
+            if not hrp:FindFirstChild("V11_FreeFlyBG") then
                 local bg = Instance.new("BodyGyro", hrp)
-                bg.Name = "V10_FreeFlyBG"
+                bg.Name = "V11_FreeFlyBG"
                 bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9); bg.P = 15000
             end
             
@@ -635,11 +648,11 @@ RunService.RenderStepped:Connect(function()
             moveVec = moveVec + Vector3.new(0, 1, 0) * (flyKeys.Up - flyKeys.Down)
             
             if moveVec.Magnitude > 0 then moveVec = moveVec.Unit end
-            hrp["V10_FreeFlyBV"].Velocity = moveVec * _G_V10.FreeFlySpeed
-            hrp["V10_FreeFlyBG"].CFrame = cam.CFrame
+            hrp["V11_FreeFlyBV"].Velocity = moveVec * _G_V11.FreeFlySpeed
+            hrp["V11_FreeFlyBG"].CFrame = cam.CFrame
         else
-            if hrp:FindFirstChild("V10_FreeFlyBV") then hrp["V10_FreeFlyBV"]:Destroy() end
-            if hrp:FindFirstChild("V10_FreeFlyBG") then hrp["V10_FreeFlyBG"]:Destroy() end
+            if hrp:FindFirstChild("V11_FreeFlyBV") then hrp["V11_FreeFlyBV"]:Destroy() end
+            if hrp:FindFirstChild("V11_FreeFlyBG") then hrp["V11_FreeFlyBG"]:Destroy() end
             if hum:GetState() == Enum.HumanoidStateType.Physics then
                 hum:ChangeState(Enum.HumanoidStateType.GettingUp)
             end
@@ -655,6 +668,8 @@ local function EnableAntiFall(HRP)
     end
 end
 local function DisableAntiFall(HRP) if HRP:FindFirstChild("FarmAntiFall") then HRP.FarmAntiFall:Destroy() end end
+
+local function PressKey(key) VIM:SendKeyEvent(true, Enum.KeyCode[key], false, game); task.wait(0.1); VIM:SendKeyEvent(false, Enum.KeyCode[key], false, game) end
 
 local function GetPlayerLevel()
     local lvl = 1
@@ -686,32 +701,32 @@ task.spawn(function()
         if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
         local HRP = char.HumanoidRootPart
 
-        _G_V10.CurrentTargetMob = nil
-        if _G_V10.AutoFarmLevel then
-            local mob, qName = GetMobForCurrentLevel(); _G_V10.CurrentTargetMob = {mob}; LblInfo.Text = "Farm Level: " .. qName
-        elseif _G_V10.ManualQuestFarm and _G_V10.SelectedManualQuest then
-            for _, v in pairs(QuestDB) do if v.QuestName == _G_V10.SelectedManualQuest then _G_V10.CurrentTargetMob = {v.MobName}; LblInfo.Text = "Farm Thủ Công: " .. v.QuestName end end
-        elseif _G_V10.AutoFarmFree and #_G_V10.SelectedMonsters > 0 then
-            _G_V10.CurrentTargetMob = _G_V10.SelectedMonsters; LblInfo.Text = "Đang Farm Tự Do"
-        elseif _G_V10.FarmAll then LblInfo.Text = "Đang Càn Quét (Farm All)"
+        _G_V11.CurrentTargetMob = nil
+        if _G_V11.AutoFarmLevel then
+            local mob, qName = GetMobForCurrentLevel(); _G_V11.CurrentTargetMob = {mob}; LblInfo.Text = "Farm Level: " .. qName
+        elseif _G_V11.ManualQuestFarm and _G_V11.SelectedManualQuest then
+            for _, v in pairs(QuestDB) do if v.QuestName == _G_V11.SelectedManualQuest then _G_V11.CurrentTargetMob = {v.MobName}; LblInfo.Text = "Farm Thủ Công: " .. v.QuestName end end
+        elseif _G_V11.AutoFarmFree and #_G_V11.SelectedMonsters > 0 then
+            _G_V11.CurrentTargetMob = _G_V11.SelectedMonsters; LblInfo.Text = "Đang Farm Tự Do"
+        elseif _G_V11.FarmAll then LblInfo.Text = "Đang Càn Quét (Farm All)"
         else LblInfo.Text = "Đang rảnh rỗi..." end
 
-        if _G_V10.AutoRepeatQuest then RepeatQuestRemote() end
-        if _G_V10.AutoEquip and _G_V10.SelectedWeapon then
-            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SelectedWeapon)
+        if _G_V11.AutoRepeatQuest then RepeatQuestRemote() end
+        if _G_V11.AutoEquip and _G_V11.SelectedWeapon then
+            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V11.SelectedWeapon)
             if wp then char.Humanoid:EquipTool(wp) end
         end
 
-        local isFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll
-        if isFarming and not _G_V10.FreeFly then
-            if _G_V10.AutoClick then
+        local isFarming = _G_V11.AutoFarmLevel or _G_V11.ManualQuestFarm or _G_V11.AutoFarmFree or _G_V11.FarmAll
+        if isFarming and not _G_V11.FreeFly then
+            if _G_V11.AutoClick then
                 local equippedTool = char:FindFirstChildWhichIsA("Tool")
                 if equippedTool then equippedTool:Activate() end
             end
-            if _G_V10.AutoSkill then
-                if _G_V10.Skill_Z then PressKey("Z") end; if _G_V10.Skill_X then PressKey("X") end
-                if _G_V10.Skill_C then PressKey("C") end; if _G_V10.Skill_V then PressKey("V") end
-                if _G_V10.Skill_F then PressKey("F") end
+            if _G_V11.AutoSkill then
+                if _G_V11.Skill_Z then PressKey("Z") end; if _G_V11.Skill_X then PressKey("X") end
+                if _G_V11.Skill_C then PressKey("C") end; if _G_V11.Skill_V then PressKey("V") end
+                if _G_V11.Skill_F then PressKey("F") end
             end
             
             EnableAntiFall(HRP)
@@ -719,11 +734,11 @@ task.spawn(function()
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
                     local isValidTarget = false
-                    if _G_V10.FarmAll then
+                    if _G_V11.FarmAll then
                         local isEx = false
-                        for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
+                        for _, ex in pairs(_G_V11.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
                         if not isEx then isValidTarget = true end
-                    elseif _G_V10.CurrentTargetMob and table.find(_G_V10.CurrentTargetMob, v.Name) then
+                    elseif _G_V11.CurrentTargetMob and table.find(_G_V11.CurrentTargetMob, v.Name) then
                         isValidTarget = true
                     end
                     if isValidTarget then
@@ -735,9 +750,9 @@ task.spawn(function()
 
             if targetMobInstance then
                 local mobPos = targetMobInstance.HumanoidRootPart.CFrame
-                local offset = CFrame.new(0, _G_V10.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
-                if _G_V10.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V10.AttackDistance)
-                elseif _G_V10.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V10.AttackDistance, 0) end
+                local offset = CFrame.new(0, _G_V11.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
+                if _G_V11.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V11.AttackDistance)
+                elseif _G_V11.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V11.AttackDistance, 0) end
                 
                 if shortestDist > 200 then TweenToSafe(mobPos * offset)
                 else HRP.CFrame = mobPos * offset end
