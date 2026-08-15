@@ -1,12 +1,13 @@
 -- ==========================================
--- DELTA UI V2 - GIAO DIỆN SIÊU MƯỢT & CHỨC NĂNG THỰC TẾ
+-- DELTA UI V3 - SUPER SMOOTH & FULL FEATURES
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local VIM = game:GetService("VirtualInputManager")
 
--- Hàm lấy vùng an toàn cho Delta
+-- Vùng an toàn của Delta
 local function GetSafeParent()
     local success, result = pcall(function() return gethui() end)
     if success and result then return result end
@@ -14,467 +15,448 @@ local function GetSafeParent()
 end
 local SafeParent = GetSafeParent()
 
--- Xóa UI cũ nếu có
-local UI_NAME = "V2_DeltaUI_Pro"
-if SafeParent:FindFirstChild(UI_NAME) then SafeParent[UI_NAME]:Destroy() end
+if SafeParent:FindFirstChild("V3_DeltaUI_Max") then SafeParent["V3_DeltaUI_Max"]:Destroy() end
 
--- Biến lưu cấu hình hệ thống
-local _G_V1 = {
-    SelectedMonsters = {},
-    SelectedWeapon = nil,
-    SelectedFruit = nil,
-    AutoFarm = false,
-    AutoEquip = false,
-    AttackPosition = "Trên Đầu",
-    AttackDistance = 15,
-    FlySpeed = 50,
-    MonstersList = {}, 
-    WeaponsList = {},
-    FruitsList = {}
+-- Cấu hình hệ thống
+local _G_V3 = {
+    AutoFarm = false, AutoEquip = false, AutoClick = false, AutoSkill = false,
+    Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
+    SelectedMonsters = {}, SelectedWeapon = nil, SelectedFruit = nil,
+    AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
+    MonstersList = {}, WeaponsList = {}, FruitsList = {}
 }
 
--- Hàm tạo góc bo tròn (UICorner)
-local function AddCorner(parent, radius)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 6)
-    corner.Parent = parent
-end
-
 -- ==========================================
--- 1. TẠO KHUNG GIAO DIỆN CHÍNH (Bo tròn, Nút X, -)
+-- TẠO GIAO DIỆN (Bo tròn, Menu Trái, Nút X/-)
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = UI_NAME
+ScreenGui.Name = "V3_DeltaUI_Max"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = SafeParent
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 580, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -290, 0.5, -180)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+MainFrame.Size = UDim2.new(0, 600, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 MainFrame.Active = true
 MainFrame.Draggable = true
-AddCorner(MainFrame, 8)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 MainFrame.Parent = ScreenGui
 
--- UI Stroke (Viền ngoài)
-local Stroke = Instance.new("UIStroke")
-Stroke.Color = Color3.fromRGB(0, 200, 255)
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Color = Color3.fromRGB(0, 150, 255)
 Stroke.Thickness = 2
-Stroke.Parent = MainFrame
 
--- PHẦN TRÊN: TIÊU ĐỀ & NÚT ĐIỀU KHIỂN
-local TopBar = Instance.new("Frame")
+-- TOP BAR (Tiêu đề & Nút tắt)
+local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 35)
 TopBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-AddCorner(TopBar, 8)
-TopBar.Parent = MainFrame
-
--- Sửa góc dưới của TopBar vuông lại để nối với thân menu
-local FixCorner = Instance.new("Frame")
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+local FixCorner = Instance.new("Frame", TopBar)
 FixCorner.Size = UDim2.new(1, 0, 0, 10)
 FixCorner.Position = UDim2.new(0, 0, 1, -10)
 FixCorner.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 FixCorner.BorderSizePixel = 0
-FixCorner.Parent = TopBar
 
-local Title = Instance.new("TextLabel")
+local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "AUTO FARM V2 (Delta)"
+Title.Text = "AUTO FARM V3 (Max Option)"
 Title.TextColor3 = Color3.fromRGB(0, 255, 255)
-Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = TopBar
 
--- Nút Thu nhỏ (-)
-local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 35, 0, 35)
-MinBtn.Position = UDim2.new(1, -70, 0, 0)
+local MinBtn = Instance.new("TextButton", TopBar)
+MinBtn.Size = UDim2.new(0, 40, 0, 35)
+MinBtn.Position = UDim2.new(1, -80, 0, 0)
 MinBtn.BackgroundTransparency = 1
 MinBtn.Text = "-"
 MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinBtn.TextSize = 24
 MinBtn.Font = Enum.Font.GothamBold
-MinBtn.Parent = TopBar
+MinBtn.TextSize = 24
 
--- Nút Tắt (X)
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 35, 0, 35)
-CloseBtn.Position = UDim2.new(1, -35, 0, 0)
+local CloseBtn = Instance.new("TextButton", TopBar)
+CloseBtn.Size = UDim2.new(0, 40, 0, 35)
+CloseBtn.Position = UDim2.new(1, -40, 0, 0)
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
-CloseBtn.TextSize = 18
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.Parent = TopBar
+CloseBtn.TextSize = 18
 
 local isMinimized = false
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
-    MainFrame.Size = isMinimized and UDim2.new(0, 580, 0, 35) or UDim2.new(0, 580, 0, 360)
-    for _, v in pairs(MainFrame:GetChildren()) do
-        if v.Name == "TabsFrame" or v.Name == "ContentFrame" then v.Visible = not isMinimized end
-    end
+    MainFrame.Size = isMinimized and UDim2.new(0, 600, 0, 35) or UDim2.new(0, 600, 0, 400)
+    MainFrame:FindFirstChild("TabsFrame").Visible = not isMinimized
+    MainFrame:FindFirstChild("ContentFrame").Visible = not isMinimized
 end)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- PHẦN TRÁI: CỘT TABS
-local TabsFrame = Instance.new("Frame")
-TabsFrame.Size = UDim2.new(0.28, 0, 1, -35)
+-- CHIA CỘT (Tabs Trái, Nội dung Phải)
+local TabsFrame = Instance.new("Frame", MainFrame)
+TabsFrame.Name = "TabsFrame"
+TabsFrame.Size = UDim2.new(0.25, 0, 1, -35)
 TabsFrame.Position = UDim2.new(0, 0, 0, 35)
-TabsFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TabsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 TabsFrame.BorderSizePixel = 0
-TabsFrame.Parent = MainFrame
+Instance.new("UIListLayout", TabsFrame).Padding = UDim.new(0, 5)
+Instance.new("UIPadding", TabsFrame).PaddingTop = UDim.new(0, 10)
 
-local TabListLayout = Instance.new("UIListLayout")
-TabListLayout.Parent = TabsFrame
-TabListLayout.Padding = UDim.new(0, 5)
-local TabPadding = Instance.new("UIPadding")
-TabPadding.Parent = TabsFrame
-TabPadding.PaddingTop = UDim.new(0, 10)
-
--- PHẦN PHẢI: NỘI DUNG CHÍNH
-local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(0.72, 0, 1, -35)
-ContentFrame.Position = UDim2.new(0.28, 0, 0, 35)
+local ContentFrame = Instance.new("Frame", MainFrame)
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(0.75, 0, 1, -35)
+ContentFrame.Position = UDim2.new(0.25, 0, 0, 35)
 ContentFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 ContentFrame.BorderSizePixel = 0
-AddCorner(ContentFrame, 8)
-ContentFrame.Parent = MainFrame
+Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 8)
 
 -- ==========================================
--- 2. HỆ THỐNG TẠO TABS CÓ ICON
+-- HÀM TẠO UI CƠ BẢN
 -- ==========================================
 local Pages = {}
-local function CreateTab(name, iconId)
-    local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(1, -10, 0, 40)
-    TabBtn.Position = UDim2.new(0, 5, 0, 0)
-    TabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-    TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    TabBtn.Text = "    " .. name
-    TabBtn.Font = Enum.Font.GothamSemibold
-    TabBtn.TextSize = 14
-    TabBtn.TextXAlignment = Enum.TextXAlignment.Left
-    AddCorner(TabBtn, 6)
-    TabBtn.Parent = TabsFrame
+local function CreateTab(name)
+    local Btn = Instance.new("TextButton", TabsFrame)
+    Btn.Size = UDim2.new(1, -10, 0, 40)
+    Btn.Position = UDim2.new(0, 5, 0, 0)
+    Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Btn.Text = name
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 14
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
 
-    -- Icon
-    local Icon = Instance.new("ImageLabel")
-    Icon.Size = UDim2.new(0, 20, 0, 20)
-    Icon.Position = UDim2.new(0, 10, 0.5, -10)
-    Icon.BackgroundTransparency = 1
-    Icon.Image = iconId
-    Icon.Parent = TabBtn
-
-    local Page = Instance.new("ScrollingFrame")
+    local Page = Instance.new("ScrollingFrame", ContentFrame)
     Page.Size = UDim2.new(1, 0, 1, 0)
     Page.BackgroundTransparency = 1
-    Page.ScrollBarThickness = 3
+    Page.ScrollBarThickness = 2
     Page.Visible = false
-    Page.Parent = ContentFrame
-    
-    local PageLayout = Instance.new("UIListLayout")
-    PageLayout.Parent = Page
-    PageLayout.Padding = UDim.new(0, 10)
-    local PagePadding = Instance.new("UIPadding")
-    PagePadding.Parent = Page
-    PagePadding.PaddingTop = UDim.new(0, 15)
-    PagePadding.PaddingLeft = UDim.new(0, 15)
-    PagePadding.PaddingRight = UDim.new(0, 15)
-    PagePadding.PaddingBottom = UDim.new(0, 15)
+    Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
+    local pad = Instance.new("UIPadding", Page)
+    pad.PaddingTop, pad.PaddingLeft, pad.PaddingRight, pad.PaddingBottom = UDim.new(0,10), UDim.new(0,10), UDim.new(0,10), UDim.new(0,10)
 
-    Pages[name] = {Btn = TabBtn, Frame = Page, Icon = Icon}
-
-    TabBtn.MouseButton1Click:Connect(function()
-        for tName, data in pairs(Pages) do
-            local isSelected = (tName == name)
-            data.Frame.Visible = isSelected
-            data.Btn.BackgroundColor3 = isSelected and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(35, 35, 40)
-            data.Btn.TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    Pages[name] = {Btn = Btn, Page = Page}
+    Btn.MouseButton1Click:Connect(function()
+        for n, p in pairs(Pages) do
+            p.Page.Visible = (n == name)
+            p.Btn.BackgroundColor3 = (n == name) and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(40, 40, 45)
+            p.Btn.TextColor3 = (n == name) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
         end
     end)
     return Page
 end
 
--- ==========================================
--- 3. CÁC HÀM UI (Bo tròn, Dropdown, Toggle)
--- ==========================================
--- Nút bật tắt
-local function CreateToggleRow(parent, name, globalVar)
-    local Row = Instance.new("Frame")
-    Row.Size = UDim2.new(1, 0, 0, 40)
-    Row.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    AddCorner(Row, 6)
-    Row.Parent = parent
+local function CreateToggle(parent, text, varName)
+    local Frame = Instance.new("Frame", parent)
+    Frame.Size = UDim2.new(1, 0, 0, 35)
+    Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
 
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(0.65, 0, 1, 0)
-    Label.Position = UDim2.new(0, 10, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = name
-    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.Gotham
-    Label.TextSize = 14
-    Label.Parent = Row
+    local Lbl = Instance.new("TextLabel", Frame)
+    Lbl.Size = UDim2.new(0.7, 0, 1, 0)
+    Lbl.Position = UDim2.new(0, 10, 0, 0)
+    Lbl.BackgroundTransparency = 1
+    Lbl.Text = text
+    Lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Lbl.Font = Enum.Font.Gotham
+    Lbl.TextSize = 14
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
 
-    local ToggleBtn = Instance.new("TextButton")
-    ToggleBtn.Size = UDim2.new(0.3, 0, 0, 30)
-    ToggleBtn.Position = UDim2.new(0.68, 0, 0.5, -15)
-    ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleBtn.Text = "TẮT"
-    ToggleBtn.Font = Enum.Font.GothamBold
-    ToggleBtn.TextSize = 12
-    AddCorner(ToggleBtn, 4)
-    ToggleBtn.Parent = Row
-
-    ToggleBtn.MouseButton1Click:Connect(function()
-        _G_V1[globalVar] = not _G_V1[globalVar]
-        ToggleBtn.BackgroundColor3 = _G_V1[globalVar] and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
-        ToggleBtn.Text = _G_V1[globalVar] and "BẬT" or "TẮT"
-    end)
-end
-
--- Dropdown quét danh sách
-local function CreateDropdown(parent, title, itemsList, globalVar, isMultiSelect)
-    local Wrapper = Instance.new("Frame")
-    Wrapper.Size = UDim2.new(1, 0, 0, 40)
-    Wrapper.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    Wrapper.ClipsDescendants = true
-    AddCorner(Wrapper, 6)
-    Wrapper.Parent = parent
-
-    local MainBtn = Instance.new("TextButton")
-    MainBtn.Size = UDim2.new(1, 0, 0, 40)
-    MainBtn.BackgroundTransparency = 1
-    MainBtn.Text = "  " .. title .. " ▼"
-    MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MainBtn.TextXAlignment = Enum.TextXAlignment.Left
-    MainBtn.Font = Enum.Font.Gotham
-    MainBtn.TextSize = 13
-    MainBtn.Parent = Wrapper
-
-    local DropFrame = Instance.new("ScrollingFrame")
-    DropFrame.Size = UDim2.new(1, 0, 0, 120)
-    DropFrame.Position = UDim2.new(0, 0, 0, 40)
-    DropFrame.BackgroundTransparency = 1
-    DropFrame.ScrollBarThickness = 2
-    DropFrame.Parent = Wrapper
-
-    local DropLayout = Instance.new("UIListLayout")
-    DropLayout.Parent = DropFrame
-
-    MainBtn.MouseButton1Click:Connect(function()
-        local isOpen = Wrapper.Size.Y.Offset > 40
-        Wrapper.Size = isOpen and UDim2.new(1, 0, 0, 40) or UDim2.new(1, 0, 0, 160)
-    end)
-
-    local function RefreshList(newList)
-        if newList then itemsList = newList end
-        for _, v in pairs(DropFrame:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
-        
-        for _, item in pairs(itemsList) do
-            local ItemBtn = Instance.new("TextButton")
-            ItemBtn.Size = UDim2.new(1, 0, 0, 30)
-            ItemBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-            ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            ItemBtn.Text = item
-            ItemBtn.Parent = DropFrame
-
-            ItemBtn.MouseButton1Click:Connect(function()
-                if isMultiSelect then
-                    local idx = table.find(_G_V1[globalVar], item)
-                    if idx then
-                        table.remove(_G_V1[globalVar], idx)
-                        ItemBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-                    else
-                        table.insert(_G_V1[globalVar], item)
-                        ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 150)
-                    end
-                else
-                    _G_V1[globalVar] = item
-                    MainBtn.Text = "  " .. title .. ": " .. item
-                    Wrapper.Size = UDim2.new(1, 0, 0, 40)
-                end
-            end)
-        end
-        DropFrame.CanvasSize = UDim2.new(0, 0, 0, #itemsList * 30)
-    end
-    RefreshList(itemsList)
-    return RefreshList
-end
-
-local function CreateButton(parent, name, callback)
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, 0, 0, 38)
-    Btn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    local Btn = Instance.new("TextButton", Frame)
+    Btn.Size = UDim2.new(0.25, 0, 0, 25)
+    Btn.Position = UDim2.new(0.7, 0, 0.5, -12.5)
+    Btn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.Text = name
+    Btn.Text = "TẮT"
     Btn.Font = Enum.Font.GothamBold
-    AddCorner(Btn, 6)
-    Btn.Parent = parent
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
+
+    Btn.MouseButton1Click:Connect(function()
+        _G_V3[varName] = not _G_V3[varName]
+        Btn.BackgroundColor3 = _G_V3[varName] and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+        Btn.Text = _G_V3[varName] and "BẬT" or "TẮT"
+    end)
+end
+
+local function CreateButton(parent, text, callback)
+    local Btn = Instance.new("TextButton", parent)
+    Btn.Size = UDim2.new(1, 0, 0, 35)
+    Btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Text = text
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 14
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
     Btn.MouseButton1Click:Connect(callback)
 end
 
--- ==========================================
--- 4. TẠO CÁC TABS NỘI DUNG
--- ==========================================
--- Icons (ID Hình ảnh)
-local PageMain = CreateTab("Main", "rbxassetid://6031280882")
-local PageSetting = CreateTab("Setting", "rbxassetid://6031075931")
-local PageFruit = CreateTab("Fruit", "rbxassetid://6031225818")
+local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
+    local Frame = Instance.new("Frame", parent)
+    Frame.Size = UDim2.new(1, 0, 0, 35)
+    Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Frame.ClipsDescendants = true
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
 
-Pages["Main"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-Pages["Main"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-PageMain.Visible = true
+    local MainBtn = Instance.new("TextButton", Frame)
+    MainBtn.Size = UDim2.new(1, 0, 0, 35)
+    MainBtn.BackgroundTransparency = 1
+    MainBtn.Text = "  " .. title .. " ▼"
+    MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MainBtn.Font = Enum.Font.Gotham
+    MainBtn.TextSize = 14
+    MainBtn.TextXAlignment = Enum.TextXAlignment.Left
 
--- THÊM HÀM BAY (TWEEN SERVICE)
-local function TweenTo(targetCFrame)
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    local HRP = LocalPlayer.Character.HumanoidRootPart
+    local Drop = Instance.new("ScrollingFrame", Frame)
+    Drop.Size = UDim2.new(1, 0, 0, 115)
+    Drop.Position = UDim2.new(0, 0, 0, 35)
+    Drop.BackgroundTransparency = 1
+    Drop.ScrollBarThickness = 2
+    Instance.new("UIListLayout", Drop)
+
+    MainBtn.MouseButton1Click:Connect(function()
+        Frame.Size = Frame.Size.Y.Offset == 35 and UDim2.new(1, 0, 0, 150) or UDim2.new(1, 0, 0, 35)
+    end)
+
+    local function Refresh(newList)
+        if newList then itemsList = newList end
+        for _, v in pairs(Drop:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+        for _, item in pairs(itemsList) do
+            local Btn = Instance.new("TextButton", Drop)
+            Btn.Size = UDim2.new(1, 0, 0, 30)
+            Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+            Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            Btn.Text = item
+            Btn.Font = Enum.Font.Gotham
+            Btn.TextSize = 13
+            
+            Btn.MouseButton1Click:Connect(function()
+                if multiSelect then
+                    local idx = table.find(_G_V3[globalVar], item)
+                    if idx then table.remove(_G_V3[globalVar], idx); Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+                    else table.insert(_G_V3[globalVar], item); Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 150) end
+                else
+                    _G_V3[globalVar] = item
+                    MainBtn.Text = "  " .. title .. ": " .. item
+                    Frame.Size = UDim2.new(1, 0, 0, 35)
+                end
+            end)
+        end
+        Drop.CanvasSize = UDim2.new(0, 0, 0, #itemsList * 30)
+    end
+    Refresh(itemsList)
+    return Refresh
+end
+
+-- ==========================================
+-- XÂY DỰNG TABS
+-- ==========================================
+local TabMain = CreateTab("⚔️ Main")
+local TabSettings = CreateTab("⚙️ Settings")
+local TabSkills = CreateTab("⚡ Skills")
+local TabFruit = CreateTab("🍎 Fruits")
+local TabStatus = CreateTab("📊 Status")
+
+Pages["⚔️ Main"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+Pages["⚔️ Main"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+TabMain.Visible = true
+
+-- --- TAB MAIN ---
+local DropMonsters = CreateDropdown(TabMain, "Chọn Quái (Được chọn nhiều)", {}, "SelectedMonsters", true)
+CreateButton(TabMain, "🔍 Quét Quái (Smart Scan)", function()
+    local mobs = {}
+    -- Quét toàn map, tìm model có Humanoid
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(v) then
+            if not table.find(mobs, v.Name) then table.insert(mobs, v.Name) end
+        end
+    end
+    table.sort(mobs)
+    DropMonsters(mobs)
+end)
+CreateToggle(TabMain, "Bật Auto Farm (Bay Tới Quái)", "AutoFarm")
+CreateToggle(TabMain, "Bật Tự Động Đánh (Auto Click)", "AutoClick")
+
+
+-- --- TAB SETTINGS ---
+CreateDropdown(TabSettings, "Kiểu Đánh", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
+CreateDropdown(TabSettings, "Khoảng Cách", {5, 10, 15, 20, 30}, "AttackDistance", false)
+CreateDropdown(TabSettings, "Tốc Độ Bay", {100, 200, 300, 400}, "FlySpeed", false)
+
+local DropWeapons = CreateDropdown(TabSettings, "Chọn Vũ Khí", {}, "SelectedWeapon", false)
+CreateButton(TabSettings, "🎒 Quét Túi Đồ", function()
+    local weps = {}
+    for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do if v:IsA("Tool") then table.insert(weps, v.Name) end end
+    if LocalPlayer.Character then
+        for _, v in pairs(LocalPlayer.Character:GetChildren()) do if v:IsA("Tool") and not table.find(weps, v.Name) then table.insert(weps, v.Name) end end
+    end
+    DropWeapons(weps)
+end)
+CreateToggle(TabSettings, "Bật Tự Động Cầm Vũ Khí", "AutoEquip")
+
+
+-- --- TAB SKILLS ---
+CreateToggle(TabSkills, "Kích Hoạt Auto Skill", "AutoSkill")
+CreateToggle(TabSkills, "Tự Động Bấm Phím Z", "Skill_Z")
+CreateToggle(TabSkills, "Tự Động Bấm Phím X", "Skill_X")
+CreateToggle(TabSkills, "Tự Động Bấm Phím C", "Skill_C")
+CreateToggle(TabSkills, "Tự Động Bấm Phím V", "Skill_V")
+CreateToggle(TabSkills, "Tự Động Bấm Phím F", "Skill_F")
+
+
+-- --- TAB FRUITS ---
+local DropFruits = CreateDropdown(TabFruit, "Chọn Trái Cây Đã Rơi", {}, "SelectedFruit", false)
+CreateButton(TabFruit, "🍎 Quét Trái Cây (Smart Scan)", function()
+    local fruits = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if (v:IsA("Tool") or v:IsA("Model")) and (string.find(string.lower(v.Name), "fruit") or v:FindFirstChild("Handle")) then
+            -- Bỏ qua trái cây đang trong tay người chơi khác
+            if not v.Parent:FindFirstChild("Humanoid") then
+                if not table.find(fruits, v.Name) then table.insert(fruits, v.Name) end
+            end
+        end
+    end
+    DropFruits(fruits)
+end)
+
+-- Hàm bay mượt (Có NoClip)
+local function TweenToTarget(targetCFrame)
+    local HRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not HRP then return end
+    
     local distance = (HRP.Position - targetCFrame.Position).Magnitude
-    local time = distance / _G_V1.FlySpeed
+    local time = distance / _G_V3.FlySpeed
 
     local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(HRP, tweenInfo, {CFrame = targetCFrame})
+    
+    -- Chống rơi do trọng lực khi bay
+    local BV = Instance.new("BodyVelocity")
+    BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    BV.Velocity = Vector3.new(0, 0, 0)
+    BV.Parent = HRP
+
     tween:Play()
-    return tween
+    tween.Completed:Wait()
+    BV:Destroy()
 end
 
--- --- TAB MAIN ---
-local ReloadMonsters = CreateDropdown(PageMain, "Chọn Quái (Multi-Select)", {}, "SelectedMonsters", true)
-CreateButton(PageMain, "🔍 Quét Quái Toàn Map", function()
-    local mobs = {}
-    -- Sửa 'workspace.Enemies' thành thư mục chứa quái trong game bạn đang chơi
-    local enemyFolder = workspace:FindFirstChild("Enemies") or workspace
-    for _, v in pairs(enemyFolder:GetChildren()) do
-        if v:FindFirstChild("Humanoid") and not table.find(mobs, v.Name) then
-            table.insert(mobs, v.Name)
-        end
-    end
-    ReloadMonsters(mobs)
-end)
-CreateToggleRow(PageMain, "Bật Auto Farm", "AutoFarm")
-
--- --- TAB SETTING (KHOẢNG CÁCH, AUTO EQUIP) ---
-CreateDropdown(PageSetting, "Kiểu Đánh", {"Trên Đầu", "Đằng Sau", "Dưới Chân"}, "AttackPosition", false)
-
-local ReloadWeapons = CreateDropdown(PageSetting, "Chọn Vũ Khí Đánh", {}, "SelectedWeapon", false)
-CreateButton(PageSetting, "🎒 Quét Túi Đồ & Nhân vật", function()
-    local weps = {}
-    -- Quét trong Balo
-    for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
-        if v:IsA("Tool") then table.insert(weps, v.Name) end
-    end
-    -- Quét cả trên tay nhân vật (fix lỗi Combat không hiện)
-    if LocalPlayer.Character then
-        for _, v in pairs(LocalPlayer.Character:GetChildren()) do
-            if v:IsA("Tool") and not table.find(weps, v.Name) then table.insert(weps, v.Name) end
-        end
-    end
-    ReloadWeapons(weps)
-end)
-CreateToggleRow(PageSetting, "Bật Auto Equip", "AutoEquip")
-
--- --- TAB FRUIT ---
-local ReloadFruits = CreateDropdown(PageFruit, "Chọn Trái Cây", {}, "SelectedFruit", false)
-CreateButton(PageFruit, "🍎 Quét Trái Cây Toàn Server", function()
-    local fruits = {}
+CreateButton(TabFruit, "🚀 Bay Đến Trái Đã Chọn", function()
+    if not _G_V3.SelectedFruit then return end
     for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Tool") or (v:IsA("Model") and string.find(string.lower(v.Name), "fruit")) then
-            if not table.find(fruits, v.Name) then table.insert(fruits, v.Name) end
+        if v.Name == _G_V3.SelectedFruit then
+            local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
+            if targetPart then TweenToTarget(targetPart.CFrame) break end
         end
     end
-    ReloadFruits(fruits)
 end)
 
-CreateButton(PageFruit, "🚀 Bay Đến Trái Đã Chọn", function()
-    if not _G_V1.SelectedFruit then return end
+CreateButton(TabFruit, "📦 Lụm Tất Cả Trái", function()
     for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == _G_V1.SelectedFruit and v:IsA("Tool") and v:FindFirstChild("Handle") then
-            TweenTo(v.Handle.CFrame)
-            break
+        if (v:IsA("Tool") or v:IsA("Model")) and string.find(string.lower(v.Name), "fruit") and not v.Parent:FindFirstChild("Humanoid") then
+            local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
+            if targetPart then TweenToTarget(targetPart.CFrame); task.wait(0.5) end
         end
     end
 end)
 
-CreateButton(PageFruit, "📦 Nhặt Tất Cả Trái (Auto)", function()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if (v:IsA("Tool") or string.find(string.lower(v.Name), "fruit")) and v:FindFirstChild("Handle") then
-            local t = TweenTo(v.Handle.CFrame)
-            if t then t.Completed:Wait() end
-            task.wait(0.5)
-        end
-    end
-end)
 
--- ==========================================
--- 5. ENGINE: LOGIC CHẠY NGẦM (FARM & EQUIP)
--- ==========================================
+-- --- TAB STATUS ---
+local LblTime = Instance.new("TextLabel", TabStatus)
+LblTime.Size = UDim2.new(1, 0, 0, 30)
+LblTime.BackgroundTransparency = 1
+LblTime.TextColor3 = Color3.fromRGB(200, 255, 200)
+LblTime.Font = Enum.Font.GothamBold
+LblTime.TextSize = 14
+LblTime.TextXAlignment = Enum.TextXAlignment.Left
+
+local LblServer = LblTime:Clone()
+LblServer.Parent = TabStatus
+LblServer.TextColor3 = Color3.fromRGB(255, 200, 200)
+
 task.spawn(function()
-    while task.wait(0.1) do
-        -- 1. Auto Equip
-        if _G_V1.AutoEquip and _G_V1.SelectedWeapon and LocalPlayer.Character then
-            local weaponInBackpack = LocalPlayer.Backpack:FindFirstChild(_G_V1.SelectedWeapon)
-            if weaponInBackpack then
-                LocalPlayer.Character.Humanoid:EquipTool(weaponInBackpack)
-            end
+    while task.wait(1) do
+        local d = os.date("*t")
+        LblTime.Text = string.format("🕒 Thời gian: %02d:%02d:%02d", d.hour, d.min, d.sec)
+        LblServer.Text = "👥 Số người chơi: " .. #Players:GetPlayers() .. "/" .. Players.MaxPlayers
+    end
+end)
+
+
+-- ==========================================
+-- ENGINE LÕI: BAY XUYÊN TƯỜNG & AUTO FARM
+-- ==========================================
+
+-- Bật NoClip (Xuyên tường) liên tục khi đang bật farm hoặc bay
+RunService.Stepped:Connect(function()
+    if _G_V3.AutoFarm and LocalPlayer.Character then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+local function PressKey(key)
+    VIM:SendKeyEvent(true, Enum.KeyCode[key], false, game)
+    task.wait(0.1)
+    VIM:SendKeyEvent(false, Enum.KeyCode[key], false, game)
+end
+
+task.spawn(function()
+    while task.wait() do
+        -- Auto Equip
+        if _G_V3.AutoEquip and _G_V3.SelectedWeapon and LocalPlayer.Character then
+            local wp = LocalPlayer.Backpack:FindFirstChild(_G_V3.SelectedWeapon)
+            if wp then LocalPlayer.Character.Humanoid:EquipTool(wp) end
         end
 
-        -- 2. Auto Farm (Logic Tính Toán Vị Trí & Bay)
-        if _G_V1.AutoFarm and #_G_V1.SelectedMonsters > 0 then
-            local char = LocalPlayer.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+        -- Auto Click
+        if _G_V3.AutoClick and _G_V3.AutoFarm then
+            VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        end
 
-            -- Tìm quái gần nhất có trong list
-            local targetMob = nil
-            local shortestDist = math.huge
-            local enemyFolder = workspace:FindFirstChild("Enemies") or workspace
+        -- Auto Skill
+        if _G_V3.AutoSkill and _G_V3.AutoFarm then
+            if _G_V3.Skill_Z then PressKey("Z") end
+            if _G_V3.Skill_X then PressKey("X") end
+            if _G_V3.Skill_C then PressKey("C") end
+            if _G_V3.Skill_V then PressKey("V") end
+            if _G_V3.Skill_F then PressKey("F") end
+        end
 
-            for _, mob in pairs(enemyFolder:GetChildren()) do
-                if table.find(_G_V1.SelectedMonsters, mob.Name) and mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-                    local d = (char.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude
-                    if d < shortestDist then
-                        shortestDist = d
-                        targetMob = mob
+        -- Auto Farm Logic
+        if _G_V3.AutoFarm and #_G_V3.SelectedMonsters > 0 and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = LocalPlayer.Character.HumanoidRootPart
+            local targetMob, shortestDist = nil, math.huge
+
+            -- Tìm quái gần nhất
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                    if table.find(_G_V3.SelectedMonsters, v.Name) then
+                        local dist = (HRP.Position - v.HumanoidRootPart.Position).Magnitude
+                        if dist < shortestDist then shortestDist = dist; targetMob = v end
                     end
                 end
             end
 
-            -- Nếu tìm thấy quái, tính CFrame và bay tới
+            -- Bay tới / Đứng trên đầu quái
             if targetMob then
-                local mobCFrame = targetMob.HumanoidRootPart.CFrame
-                local offset = CFrame.new(0,0,0)
-                local dist = _G_V1.AttackDistance
+                local mobPos = targetMob.HumanoidRootPart.CFrame
+                local offset = CFrame.new(0, _G_V3.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
+                if _G_V3.AttackPosition == "Đằng Sau" then offset = CFrame.new(0, 0, _G_V3.AttackDistance)
+                elseif _G_V3.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V3.AttackDistance, 0) end
 
-                if _G_V1.AttackPosition == "Trên Đầu" then
-                    offset = CFrame.new(0, dist, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                elseif _G_V1.AttackPosition == "Đằng Sau" then
-                    offset = CFrame.new(0, 0, dist)
-                elseif _G_V1.AttackPosition == "Dưới Chân" then
-                    offset = CFrame.new(0, -dist, 0)
-                end
-                
-                -- Vô hiệu hóa rơi khi đang farm
-                if char.HumanoidRootPart:FindFirstChild("BodyVelocity") == nil then
-                    local bv = Instance.new("BodyVelocity")
-                    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                    bv.Velocity = Vector3.new(0, 0, 0)
-                    bv.Parent = char.HumanoidRootPart
-                end
+                local targetCFrame = mobPos * offset
 
-                char.HumanoidRootPart.CFrame = mobCFrame * offset
-            end
-        else
-            -- Tắt Auto Farm thì xóa trạng thái lơ lửng
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local bv = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyVelocity")
-                if bv then bv:Destroy() end
+                if shortestDist > 100 then
+                    -- Xa quá thì Tween cho mượt
+                    TweenToTarget(targetCFrame)
+                else
+                    -- Gần thì dịch chuyển thẳng CFrame (Chống giật)
+                    HRP.CFrame = targetCFrame
+                end
             end
         end
     end
