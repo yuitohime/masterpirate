@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V10 - ULTIMATE (ISLAND FIX, SAVE/LOAD, SERVER HOP)
+-- DELTA UI V10 - ULTIMATE (ISLAND FIX, SAVE/LOAD, SERVER HOP) + TOGGLE BUTTON
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -93,6 +93,26 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20); MainFrame.BackgroundTra
 MainFrame.Active = true; MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(0, 200, 255)
+
+-- NÚT VUÔNG BÊN TRÁI ĐỂ ẨN/HIỆN MENU
+local ToggleBtn = Instance.new("TextButton", ScreenGui)
+ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
+ToggleBtn.Position = UDim2.new(0, 15, 0.5, -22) -- Nằm góc trái giữa màn hình
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+ToggleBtn.BackgroundTransparency = 0.2
+ToggleBtn.Text = "⚙️" -- Icon cài đặt (có thể đổi)
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 200, 255)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 22
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true -- Cho phép kéo thả nút này
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(0, 200, 255)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+------------------------------------------------
 
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 35); TopBar.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
