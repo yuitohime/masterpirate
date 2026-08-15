@@ -1,5 +1,5 @@
 -- ==========================================
--- DELTA UI V10 - ULTIMATE (FIX FLY STUCK, AUTO HAKI/KEN ADDED)
+-- DELTA UI V10 - ULTIMATE (FIX FLY STUCK, EXACT AUTO HAKI/KEN FROM SPY)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -44,7 +44,7 @@ local _G_V10 = {
     AutoFarmLevel = false, ManualQuestFarm = false, SelectedManualQuest = nil, CurrentTargetMob = nil,
     AutoEquip = false, AutoClick = false, AutoSkill = false, AutoRepeatQuest = false,
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
-    AutoHaki = false, AutoKen = false, -- Thêm biến Auto Haki / Ken
+    AutoHaki = false, AutoKen = false, -- Tự động bật Haki/Ken
     SelectedWeapon = nil, SelectedFruit = nil,
     AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
     SelectedIsland = nil, SelectedSpawnPoint = nil,
@@ -458,31 +458,33 @@ CreateTextBox(TabSettings, "Tên bản lưu mới", function(text) ConfigNameInp
 CreateButton(TabSettings, "💾 Lưu Cấu Hình", function() SaveConfig(ConfigNameInput); DropConfigs(GetConfigsList()) end)
 CreateButton(TabSettings, "📂 Tải Cấu Hình Đã Chọn", function() if _G_V10.SelectedConfig then LoadConfig(_G_V10.SelectedConfig) end end)
 
+
 -- ==========================================
--- ENGINE LÕI (AUTO HAKI, FLY, AUTO FARM)
+-- ENGINE LÕI (AUTO HAKI, FLY FIX, AUTO FARM)
 -- ==========================================
 
--- AUTO HAKI / KEN (Liên tục gửi Remote bật Haki/Ken dựa trên dữ liệu Spy)
+-- AUTO HAKI / KEN (Gửi Remote liên tục mỗi 0.5s để luôn giữ trạng thái BẬT)
 task.spawn(function()
-    while task.wait(1) do
-        if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then continue end
-        if LocalPlayer.Character.Humanoid.Health <= 0 then continue end
+    while task.wait(0.5) do
+        local char = LocalPlayer.Character
+        if not char or not char:FindFirstChild("Humanoid") then continue end
+        if char.Humanoid.Health <= 0 then continue end
         
         local rs = game:GetService("ReplicatedStorage")
         
+        -- Dựa vào dữ liệu Spy: Haki có thể truyền vào RemoteEvent hoặc Haki (Args: "GTS", true, nil, true)
         if _G_V10.AutoHaki then
             pcall(function()
-                -- Thử tất cả các dạng cấu trúc Remote tìm thấy từ Spy cho Haki
+                if rs:FindFirstChild("RemoteEvent") then rs.RemoteEvent:FireServer("GTS", true, nil, true) end
                 if rs:FindFirstChild("Haki") then rs.Haki:FireServer("GTS", true, nil, true) end
-                if rs:FindFirstChild("MainRemote") then rs.MainRemote:FireServer("Haki", true) end
             end)
         end
         
+        -- Dựa vào dữ liệu Spy: Ken có thể truyền vào MainRemote (Args: "Ken", true) hoặc Ken (Args: "GTS", true, nil, true)
         if _G_V10.AutoKen then
             pcall(function()
-                -- Thử tất cả các dạng cấu trúc Remote tìm thấy từ Spy cho Ken
-                if rs:FindFirstChild("Ken") then rs.Ken:FireServer("GTS", true, nil, true) end
                 if rs:FindFirstChild("MainRemote") then rs.MainRemote:FireServer("Ken", true) end
+                if rs:FindFirstChild("Ken") then rs.Ken:FireServer("GTS", true, nil, true) end
             end)
         end
     end
@@ -537,7 +539,7 @@ UIS.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- LÕI BAY TỰ DO (ĐÃ FIX LỖI ĐỨNG IM/ĐƠ NHÂN VẬT KHI TẮT BAY)
+-- LÕI BAY TỰ DO (ĐÃ ĐƯỢC FIX LẠI CƠ CHẾ STATE VẬT LÝ ĐỂ KHÔNG BỊ KẸT ĐỨNG YÊN)
 local flyKeys = {W = 0, A = 0, S = 0, D = 0, Up = 0, Down = 0}
 UIS.InputBegan:Connect(function(k, gp)
     if gp then return end
@@ -558,31 +560,30 @@ UIS.InputEnded:Connect(function(k, gp)
     elseif k.KeyCode == Enum.KeyCode.LeftControl then flyKeys.Down = 0 end
 end)
 
-local FreeFlyBV, FreeFlyBG
 RunService.RenderStepped:Connect(function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
         local hrp = char.HumanoidRootPart
         local hum = char.Humanoid
         
-        -- Cập nhật Noclip khi farm
+        -- Cập nhật Noclip khi auto farm
         if _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll then
             for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         end
 
         if _G_V10.FreeFly then
-            hum.PlatformStand = true
+            -- Chuyển state sang Physics để nhân vật lơ lửng an toàn (Thay vì PlatformStand)
+            hum:ChangeState(Enum.HumanoidStateType.Physics)
+            
             if not hrp:FindFirstChild("V10_FreeFlyBV") then
-                FreeFlyBV = Instance.new("BodyVelocity")
-                FreeFlyBV.Name = "V10_FreeFlyBV"
-                FreeFlyBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                FreeFlyBV.Parent = hrp
+                local bv = Instance.new("BodyVelocity", hrp)
+                bv.Name = "V10_FreeFlyBV"
+                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
             end
             if not hrp:FindFirstChild("V10_FreeFlyBG") then
-                FreeFlyBG = Instance.new("BodyGyro")
-                FreeFlyBG.Name = "V10_FreeFlyBG"
-                FreeFlyBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9); FreeFlyBG.P = 15000
-                FreeFlyBG.Parent = hrp
+                local bg = Instance.new("BodyGyro", hrp)
+                bg.Name = "V10_FreeFlyBG"
+                bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9); bg.P = 15000
             end
             
             local cam = workspace.CurrentCamera
@@ -592,15 +593,15 @@ RunService.RenderStepped:Connect(function()
             moveVec = moveVec + Vector3.new(0, 1, 0) * (flyKeys.Up - flyKeys.Down)
             
             if moveVec.Magnitude > 0 then moveVec = moveVec.Unit end
-            FreeFlyBV.Velocity = moveVec * _G_V10.FreeFlySpeed
-            FreeFlyBG.CFrame = cam.CFrame
+            hrp["V10_FreeFlyBV"].Velocity = moveVec * _G_V10.FreeFlySpeed
+            hrp["V10_FreeFlyBG"].CFrame = cam.CFrame
         else
-            -- Clean-up triệt để tránh kẹt trạng thái
+            -- Xóa body movers và đổi state để trả lại khả năng di chuyển bình thường
             if hrp:FindFirstChild("V10_FreeFlyBV") then hrp["V10_FreeFlyBV"]:Destroy() end
             if hrp:FindFirstChild("V10_FreeFlyBG") then hrp["V10_FreeFlyBG"]:Destroy() end
-            if hum.PlatformStand then 
-                hum.PlatformStand = false
-                hum:ChangeState(Enum.HumanoidStateType.Freefall) -- Ép rơi tự do (gỡ đơ vật lý)
+            
+            if hum:GetState() == Enum.HumanoidStateType.Physics then
+                hum:ChangeState(Enum.HumanoidStateType.GettingUp) -- Ép nhân vật đứng lại bình thường
             end
         end
     end
@@ -663,7 +664,7 @@ task.spawn(function()
         end
 
         local isFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll
-        if isFarming and not _G_V10.FreeFly then -- Dừng farm nếu đang dùng FreeFly
+        if isFarming and not _G_V10.FreeFly then
             if _G_V10.AutoClick then
                 local equippedTool = char:FindFirstChildWhichIsA("Tool")
                 if equippedTool then equippedTool:Activate() end
