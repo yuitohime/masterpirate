@@ -1,6 +1,6 @@
 -- ==========================================
--- DELTA UI V14 - ULTIMATE MAX (SIÊU BẢN VÁ TỐI THƯỢNG)
--- (FIX BAY MOBILE, ANTI-FALL, LƯU QUÁI VĨNH VIỄN, THÊM TAB SERVER, AUTO BYPASS MENU THEO GIÂY)
+-- DELTA UI V15 - ULTIMATE MAX (SIÊU BẢN VÁ HOÀN HẢO)
+-- (FIX LƯU SCANNER VĨNH VIỄN, FIX RAID TELEPORT, CỨNG ĐƠ TRÊN KHÔNG ANTI-FLING, DỪNG SKILL KHI HẾT QUÁI)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -44,7 +44,7 @@ local DefaultConfig = {
     AutoBuyRaid = false, AutoStartRaid = false, AutoJoinGame = false, AutoFarmRaid = false,
     AutoTeleEntrance = false, AutoTeleReRaid = false, RaidEntranceDelay = 2, RaidReRaidDelay = 2,
     
-    AutoBypassMenu = true, BypassDuration = 20, -- Chức năng Bypass vào game
+    AutoBypassMenu = true, BypassDuration = 10, -- Đã chỉnh mặc định 10s
 
     AutoSpawnMihawk = false, MihawkAmount = "x1", AutoGiveShadow = false, ShadowItem = "Shadow Spirit", ShadowAmount = "x1",
     SelectedIsland = nil, SelectedSpawnPoint = nil,
@@ -54,9 +54,8 @@ local DefaultConfig = {
     
     EnableBlackScreen = false, AntiAFK = false,
     
-    -- DỮ LIỆU LƯU VĨNH VIỄN VÀO FILE
     ScannedMonstersList = {},
-    ScannerData = {Mobs = {}, Bosses = {}, NPCs = {}}
+    ScannerData = {Mobs = {}, Bosses = {}, NPCs = {}} -- LƯU CỨNG VÀO ĐÂY
 }
 
 local _G_V10 = {}
@@ -66,9 +65,35 @@ local _G_UI_Updaters = {}
 -- ==========================================
 -- HỆ THỐNG LƯU CẤU HÌNH (MASTER AUTO SAVE/LOAD)
 -- ==========================================
-local ConfigFolder = "DeltaV14_Configs"
+local ConfigFolder = "DeltaV15_Configs"
 local MasterFile = ConfigFolder .. "/MasterSettings.json"
 if isfolder and not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
+
+local txtLog -- Khai báo trước để LoadConfig có thể gọi
+
+local function RenderScannerLog()
+    if not txtLog then return end
+    local logStr = "<b><font color='#ff5555' size='15'>=== 👹 DANH SÁCH BOSS ===</font></b>\n"
+    if _G_V10.ScannerData and _G_V10.ScannerData.Bosses then
+        for k, v in pairs(_G_V10.ScannerData.Bosses) do 
+            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s (HP: %s)</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Level, v.Pos) 
+        end
+    end
+    logStr = logStr .. "\n<b><font color='#55aaff' size='15'>=== 👾 DANH SÁCH QUÁI THƯỜNG ===</font></b>\n"
+    if _G_V10.ScannerData and _G_V10.ScannerData.Mobs then
+        for k, v in pairs(_G_V10.ScannerData.Mobs) do 
+            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Pos) 
+        end
+    end
+    logStr = logStr .. "\n<b><font color='#ffaa00' size='15'>=== 🛒 DANH SÁCH NPC MUA BÁN ===</font></b>\n"
+    if _G_V10.ScannerData and _G_V10.ScannerData.NPCs then
+        for k, v in pairs(_G_V10.ScannerData.NPCs) do 
+            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Pos) 
+        end
+    end
+    txtLog.Text = logStr
+    if txtLog.Parent then txtLog.Parent.CanvasSize = UDim2.new(0, 0, 0, txtLog.TextBounds.Y + 50) end
+end
 
 local function SaveConfig(name)
     if not writefile then return end
@@ -82,7 +107,9 @@ local function LoadConfig(name)
     local s, decoded = pcall(function() return HttpService:JSONDecode(readfile(ConfigFolder.."/"..name..".json")) end)
     if s and type(decoded) == "table" then
         for k, v in pairs(decoded) do _G_V10[k] = v end
+        if not _G_V10.ScannerData then _G_V10.ScannerData = {Mobs = {}, Bosses = {}, NPCs = {}} end
         for _, updater in pairs(_G_UI_Updaters) do pcall(updater) end
+        RenderScannerLog() -- HIỂN THỊ LẠI TEXT NGAY LẬP TỨC
     end
 end
 
@@ -145,7 +172,7 @@ FixCorner.Size = UDim2.new(1, 0, 0, 10); FixCorner.Position = UDim2.new(0, 0, 1,
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0); Title.BackgroundTransparency = 1
-Title.Text = "AUTO FARM V14 (Ultimate Max)"; Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Text = "AUTO FARM V15 (Ultimate Max)"; Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
 local MinBtn = Instance.new("TextButton", TopBar)
 MinBtn.Size = UDim2.new(0, 40, 0, 35); MinBtn.Position = UDim2.new(1, -80, 0, 0); MinBtn.BackgroundTransparency = 1
@@ -412,7 +439,7 @@ CreateDropdown(TabAutoLevel, "Chọn Quest Bằng Tay", QuestListNames, "Selecte
 CreateToggleSwitch(TabAutoLevel, "Bật Đánh Quest Đã Chọn Trên", "ManualQuestFarm")
 CreateToggleSwitch(TabAutoLevel, "Bật Tự Động Đánh (Click)", "AutoClick")
 
--- --- TAB: FARM TÙY CHỌN (MULTI-SELECT) ---
+-- --- TAB: FARM TÙY CHỌN ---
 local DropMonsters = CreateDropdown(TabFreeFarm, "Chọn Quái Cần Đánh (Nhiều Con)", _G_V10.ScannedMonstersList, "SelectedMonsters", true)
 CreateButton(TabFreeFarm, "🔍 Quét Quái Thêm Vào Danh Sách", function()
     for _, v in pairs(workspace:GetDescendants()) do
@@ -494,7 +521,6 @@ CreateToggleSwitch(TabPlayer, "Lướt Không Hồi Chiêu (Dash No CD)", "DashN
 CreateToggleSwitch(TabPlayer, "🚀 Bay Tự Do (Dùng Cần Gạt Di Chuyển/W,A,S,D)", "FreeFly")
 CreateSlider(TabPlayer, "Tốc Độ Bay Tự Do", 50, 500, "FreeFlySpeed")
 
--- --- TAB: SETTINGS & SKILL ---
 CreateDivider(TabSettings, "AUTO ĐỔI VŨ KHÍ & XẢ SKILL SIÊU TỐC", Color3.fromRGB(0, 200, 255))
 CreateToggleSwitch(TabSettings, "Bật Tự Động Đổi Vũ Khí (1 <-> 2)", "AutoSwapWeapon")
 CreateSlider(TabSettings, "Min Delay Xả Skill (Giây)", 0.1, 5, "SkillSpamDelay")
@@ -524,7 +550,6 @@ CreateToggleSwitch(TabSkills, "Phím Z", "Skill_Z"); CreateToggleSwitch(TabSkill
 CreateToggleSwitch(TabSkills, "Phím C", "Skill_C"); CreateToggleSwitch(TabSkills, "Phím V", "Skill_V")
 CreateToggleSwitch(TabSkills, "Phím F", "Skill_F")
 
--- --- TAB: SERVER SYSTEM ---
 CreateToggleSwitch(TabServer, "Bảo Vệ: Chống Văng (Anti-AFK 20 phút)", "AntiAFK")
 CreateButton(TabServer, "♻️ Rejoin (Vào Lại Server Cũ)", function() TPS:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
 CreateButton(TabServer, "🌐 Hop Server (Đổi Server Khác)", function()
@@ -559,7 +584,7 @@ CreateToggleSwitch(TabScanner, "Bật Máy Quét Map Thông Minh", "AutoScanMap"
 local ScanLogFrame = Instance.new("ScrollingFrame", TabScanner)
 ScanLogFrame.Size = UDim2.new(1, 0, 0, 280); ScanLogFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 ScanLogFrame.ScrollBarThickness = 3
-local txtLog = Instance.new("TextLabel", ScanLogFrame)
+txtLog = Instance.new("TextLabel", ScanLogFrame)
 txtLog.Size = UDim2.new(1, -10, 1, 0); txtLog.BackgroundTransparency = 1; txtLog.RichText = true
 txtLog.Text = "Đang chờ quét..."
 txtLog.TextXAlignment = Enum.TextXAlignment.Left; txtLog.TextYAlignment = Enum.TextYAlignment.Top
@@ -574,6 +599,9 @@ CreateButton(TabScanner, "📋 COPY TOÀN BỘ DATA MÁY QUÉT", function()
     end
 end)
 
+-- HIỂN THỊ DỮ LIỆU CŨ NGAY KHI LOAD
+RenderScannerLog()
+
 -- ==========================================
 -- ENGINE LÕI (BẤM VẬT LÝ, TÌM KIẾM, TELEPORT)
 -- ==========================================
@@ -585,9 +613,10 @@ local function PhysicalClick(guiObj)
     task.wait(0.05); VIM:SendMouseButtonEvent(center.X, center.Y + inset.Y, 0, false, game, 0)
 end
 
-local function TapScreenEdge()
-    VIM:SendMouseButtonEvent(5, 50, 0, true, game, 0)
-    task.wait(0.05); VIM:SendMouseButtonEvent(5, 50, 0, false, game, 0)
+-- FIX: Chạm góc màn hình để không dính Menu Executor
+local function TapTopLeftCorner()
+    VIM:SendMouseButtonEvent(50, 50, 0, true, game, 0)
+    task.wait(0.05); VIM:SendMouseButtonEvent(50, 50, 0, false, game, 0)
 end
 
 local function SmartFindButton(gui, searchText)
@@ -637,7 +666,6 @@ task.spawn(function()
                     if not isEx and not _G_V10.ScannerData.Mobs[nameStr] and not _G_V10.ScannerData.Bosses[nameStr] then
                         local isl = GetClosestIsland(hrp.Position)
                         local pos = string.format("Vector3.new(%.0f, %.0f, %.0f)", hrp.Position.X, hrp.Position.Y, hrp.Position.Z)
-                        
                         if hum.MaxHealth > 50000 then _G_V10.ScannerData.Bosses[nameStr] = {Island = isl, Pos = pos, Level = hum.MaxHealth}
                         else _G_V10.ScannerData.Mobs[nameStr] = {Island = isl, Pos = pos, Level = hum.MaxHealth} end
                         hasNewData = true
@@ -657,23 +685,7 @@ task.spawn(function()
             end
         end
         
-        if hasNewData then AutoSaveTrigger() end -- Lưu tự động nếu có quái mới
-        
-        local logStr = "<b><font color='#ff5555' size='15'>=== 👹 DANH SÁCH BOSS ===</font></b>\n"
-        for k, v in pairs(_G_V10.ScannerData.Bosses) do 
-            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s (HP: %s)</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Level, v.Pos) 
-        end
-        logStr = logStr .. "\n<b><font color='#55aaff' size='15'>=== 👾 DANH SÁCH QUÁI THƯỜNG ===</font></b>\n"
-        for k, v in pairs(_G_V10.ScannerData.Mobs) do 
-            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Pos) 
-        end
-        logStr = logStr .. "\n<b><font color='#ffaa00' size='15'>=== 🛒 DANH SÁCH NPC MUA BÁN ===</font></b>\n"
-        for k, v in pairs(_G_V10.ScannerData.NPCs) do 
-            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Pos) 
-        end
-        
-        txtLog.Text = logStr
-        ScanLogFrame.CanvasSize = UDim2.new(0, 0, 0, txtLog.TextBounds.Y + 50)
+        if hasNewData then AutoSaveTrigger(); RenderScannerLog() end
     end
 end)
 
@@ -692,9 +704,8 @@ task.spawn(function()
             if loadBtn then PhysicalClick(loadBtn) end
             if playBtn then PhysicalClick(playBtn) end
         end
-        TapScreenEdge() -- Nháy góc để bỏ qua Intro nếu có
+        TapTopLeftCorner()
     end
-    print("⏳ Đã hết thời gian chạy Auto Bypass Menu.")
 end)
 
 -- ==========================================
@@ -704,7 +715,7 @@ task.spawn(function()
     while task.wait(0.2) do
         if _G_V10.AutoSpawnMihawk or _G_V10.AutoGiveShadow or _G_V10.AutoBuyRaid then
             local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
-            if talkingGui then TapScreenEdge() end
+            if talkingGui then TapTopLeftCorner() end
         end
     end
 end)
@@ -774,16 +785,16 @@ task.spawn(function()
         local distToReRaid = (hrp.Position - Vector3.new(-123, 114, 407)).Magnitude
         
         if distToReRaid < 3000 then 
+            -- TRONG MAP RAID
             if _G_V10.AutoStartRaid then pcall(function() ReplicatedStorage.Assets.Remote.RemoteEvent.Starto:FireServer() end) end
             
             if _G_V10.AutoBuyRaid then
                 local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
                 if not talkingGui then
+                    -- Bắt buộc Teleport cắm mặt vào NPC để mua Raid
+                    hrp.CFrame = CFrame.new(-123, 114, 407)
                     local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
-                    if npc and npc:FindFirstChild("HumanoidRootPart") then
-                        if (hrp.Position - npc.HumanoidRootPart.Position).Magnitude > 20 then hrp.CFrame = npc.HumanoidRootPart.CFrame; task.wait(0.5) end
-                        task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
-                    end
+                    if npc then task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end) end
                 else
                     local buyBtn = SmartFindButton(talkingGui, "Buy with Beli")
                     if buyBtn then PhysicalClick(buyBtn) end
@@ -794,14 +805,14 @@ task.spawn(function()
                 if os.clock() - lastRaidTeleport >= _G_V10.RaidReRaidDelay then hrp.CFrame = CFrame.new(-123, 114, 407); lastRaidTeleport = os.clock() end
             end
         else
+            -- NGOÀI MAP RAID
             if _G_V10.AutoBuyRaid then
                 local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
                 if not talkingGui then
+                    -- Bắt buộc Teleport cắm mặt vào NPC để mua Raid
+                    hrp.CFrame = CFrame.new(-1371, 79, 3982)
                     local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
-                    if npc and npc:FindFirstChild("HumanoidRootPart") then
-                        if (hrp.Position - npc.HumanoidRootPart.Position).Magnitude > 20 then hrp.CFrame = npc.HumanoidRootPart.CFrame; task.wait(0.5) end
-                        task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
-                    end
+                    if npc then task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end) end
                 else
                     local buyBtn = SmartFindButton(talkingGui, "Buy with Beli")
                     if buyBtn then PhysicalClick(buyBtn) end
@@ -877,12 +888,27 @@ UIS.InputEnded:Connect(function(k, gp)
     if k.KeyCode == Enum.KeyCode.W then flyKeys.W = 0 elseif k.KeyCode == Enum.KeyCode.S then flyKeys.S = 0 elseif k.KeyCode == Enum.KeyCode.A then flyKeys.A = 0 elseif k.KeyCode == Enum.KeyCode.D then flyKeys.D = 0 elseif k.KeyCode == Enum.KeyCode.Space then flyKeys.Up = 0 elseif k.KeyCode == Enum.KeyCode.LeftControl then flyKeys.Down = 0 end
 end)
 
+local function EnableAntiFall(HRP)
+    if not HRP:FindFirstChild("FarmAntiFall") then
+        local AntiFall = Instance.new("BodyVelocity"); AntiFall.Name = "FarmAntiFall"; AntiFall.MaxForce = Vector3.new(9e9, 9e9, 9e9); AntiFall.Velocity = Vector3.new(0, 0, 0); AntiFall.Parent = HRP
+    end
+end
+
 RunService.RenderStepped:Connect(function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
         local hrp = char.HumanoidRootPart
         local hum = char.Humanoid
         
+        -- FIX CỨNG ĐƠ, KHÔNG RƠI XUYÊN ĐẤT KHI FARM
+        local isNormalFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll or _G_V10.AutoFarmRaid
+        if isNormalFarming and not _G_V10.FreeFly then
+            EnableAntiFall(hrp)
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+            if hrp:FindFirstChild("FarmAntiFall") then hrp.FarmAntiFall.Velocity = Vector3.new(0, 0, 0) end
+        end
+
         if _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll or (_G_V10.AutoSea and _G_V10.IsFightingSea) or _G_V10.AutoFarmRaid then
             for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         end
@@ -894,14 +920,12 @@ RunService.RenderStepped:Connect(function()
             end
             
             local cam = workspace.CurrentCamera
-            local moveDir = hum.MoveDirection -- Lấy hướng di chuyển chuẩn từ Joystick Mobile
+            local moveDir = hum.MoveDirection
             local bv = hrp:FindFirstChild("V10_FreeFlyBV")
             
             if moveDir.Magnitude > 0 then
-                -- Nếu có gạt Joystick hoặc bấm WASD -> Bay theo hướng Camera
                 bv.Velocity = cam.CFrame.LookVector * _G_V10.FreeFlySpeed
             else
-                -- Đứng yên trên không
                 bv.Velocity = Vector3.new(0, 0, 0)
             end
             hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector)
@@ -946,6 +970,7 @@ task.spawn(function()
         local HRP = char:FindFirstChild("HumanoidRootPart")
         local Hum = char:FindFirstChild("Humanoid")
         
+        -- FIX: CHẾT XONG VẪN CHẠY TIẾP KHÔNG BỊ ĐƠ
         if not HRP or not Hum or Hum.Health <= 0 then 
             if HRP and HRP:FindFirstChild("FarmAntiFall") then HRP.FarmAntiFall:Destroy() end
             task.wait(1) 
@@ -969,51 +994,12 @@ task.spawn(function()
         local isFarmingAction = isNormalFarming or (_G_V10.AutoSea and _G_V10.IsFightingSea)
         
         if isFarmingAction and not _G_V10.FreeFly then
-            -- Tự động đổi Vũ Khí
-            if _G_V10.AutoSwapWeapon and _G_V10.PrimaryWeapon and _G_V10.SecondaryWeapon then
-                if currentSwapState == 1 then
-                    local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.PrimaryWeapon)
-                    if wp then Hum:EquipTool(wp) end
-                    if os.clock() - lastSwapTime >= _G_V10.HoldTime1 then currentSwapState = 2; lastSwapTime = os.clock() end
-                elseif currentSwapState == 2 then
-                    local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SecondaryWeapon)
-                    if wp then Hum:EquipTool(wp) end
-                    if os.clock() - lastSwapTime >= _G_V10.HoldTime2 then currentSwapState = 1; lastSwapTime = os.clock() end
-                end
-            elseif _G_V10.AutoEquip and _G_V10.SelectedWeapon then
-                local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SelectedWeapon)
-                if wp then Hum:EquipTool(wp) end
-            end
-
-            if _G_V10.AutoClick then
-                local equippedTool = char:FindFirstChildWhichIsA("Tool")
-                if equippedTool then equippedTool:Activate() end
-            end
+            local targetMobInstance = nil
+            local highestLevel = -1
+            local shortestDist = math.huge
             
-            if os.clock() - lastSkillSpamTime >= _G_V10.SkillSpamDelay then
-                lastSkillSpamTime = os.clock()
-                if _G_V10.AutoSwapWeapon then
-                    local prefix = (currentSwapState == 1) and "W1_" or "W2_"
-                    if _G_V10[prefix.."Z"] then PressKey("Z") end; if _G_V10[prefix.."X"] then PressKey("X") end
-                    if _G_V10[prefix.."C"] then PressKey("C") end; if _G_V10[prefix.."V"] then PressKey("V") end
-                    if _G_V10[prefix.."B"] then PressKey("B") end; if _G_V10[prefix.."F"] then PressKey("F") end
-                elseif _G_V10.AutoSkill then
-                    if _G_V10.Skill_Z then PressKey("Z") end; if _G_V10.Skill_X then PressKey("X") end
-                    if _G_V10.Skill_C then PressKey("C") end; if _G_V10.Skill_V then PressKey("V") end
-                    if _G_V10.Skill_F then PressKey("F") end
-                end
-            end
-            
-            -- FIX: Treo cứng trên không (Anti Fall)
-            if not HRP:FindFirstChild("FarmAntiFall") then
-                local AntiFall = Instance.new("BodyVelocity"); AntiFall.Name = "FarmAntiFall"; AntiFall.MaxForce = Vector3.new(9e9, 9e9, 9e9); AntiFall.Velocity = Vector3.new(0, 0, 0); AntiFall.Parent = HRP
-            end
-            
+            -- TÌM TARGET TRƯỚC TIÊN
             if isNormalFarming and not (_G_V10.AutoSea and _G_V10.IsFightingSea) then
-                local targetMobInstance = nil
-                local highestLevel = -1
-                local shortestDist = math.huge
-                
                 for _, v in pairs(workspace:GetDescendants()) do
                     if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
                         local isValidTarget = false
@@ -1043,7 +1029,44 @@ task.spawn(function()
                         end
                     end
                 end
+            end
 
+            -- FIX: DỪNG SKILL / DỪNG ĐỔI VŨ KHÍ NẾU HẾT QUÁI TRONG RAID
+            if targetMobInstance or (_G_V10.AutoSea and _G_V10.IsFightingSea) then
+                if _G_V10.AutoSwapWeapon and _G_V10.PrimaryWeapon and _G_V10.SecondaryWeapon then
+                    if currentSwapState == 1 then
+                        local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.PrimaryWeapon)
+                        if wp then Hum:EquipTool(wp) end
+                        if os.clock() - lastSwapTime >= _G_V10.HoldTime1 then currentSwapState = 2; lastSwapTime = os.clock() end
+                    elseif currentSwapState == 2 then
+                        local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SecondaryWeapon)
+                        if wp then Hum:EquipTool(wp) end
+                        if os.clock() - lastSwapTime >= _G_V10.HoldTime2 then currentSwapState = 1; lastSwapTime = os.clock() end
+                    end
+                elseif _G_V10.AutoEquip and _G_V10.SelectedWeapon then
+                    local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SelectedWeapon)
+                    if wp then Hum:EquipTool(wp) end
+                end
+
+                if _G_V10.AutoClick then
+                    local equippedTool = char:FindFirstChildWhichIsA("Tool")
+                    if equippedTool then equippedTool:Activate() end
+                end
+                
+                if os.clock() - lastSkillSpamTime >= _G_V10.SkillSpamDelay then
+                    lastSkillSpamTime = os.clock()
+                    if _G_V10.AutoSwapWeapon then
+                        local prefix = (currentSwapState == 1) and "W1_" or "W2_"
+                        if _G_V10[prefix.."Z"] then PressKey("Z") end; if _G_V10[prefix.."X"] then PressKey("X") end
+                        if _G_V10[prefix.."C"] then PressKey("C") end; if _G_V10[prefix.."V"] then PressKey("V") end
+                        if _G_V10[prefix.."B"] then PressKey("B") end; if _G_V10[prefix.."F"] then PressKey("F") end
+                    elseif _G_V10.AutoSkill then
+                        if _G_V10.Skill_Z then PressKey("Z") end; if _G_V10.Skill_X then PressKey("X") end
+                        if _G_V10.Skill_C then PressKey("C") end; if _G_V10.Skill_V then PressKey("V") end
+                        if _G_V10.Skill_F then PressKey("F") end
+                    end
+                end
+                
                 if targetMobInstance then
                     local mobPos = targetMobInstance.HumanoidRootPart.CFrame
                     local offset = CFrame.new(0, _G_V10.AttackDistance, 0) * CFrame.Angles(math.rad(-90),0,0)
@@ -1051,7 +1074,11 @@ task.spawn(function()
                     elseif _G_V10.AttackPosition == "Dưới Chân" then offset = CFrame.new(0, -_G_V10.AttackDistance, 0) end
                     
                     HRP.CFrame = mobPos * offset
-                    if HRP:FindFirstChild("FarmAntiFall") then HRP.FarmAntiFall.Velocity = Vector3.new(0, 0, 0) end
+                end
+            else
+                -- NẾU KHÔNG CÓ QUÁI -> KHÔNG CẦM VK, KHÔNG SKILL, CHỈ ĐỨNG YÊN HOẶC LƠ LỬNG
+                if HRP:FindFirstChild("FarmAntiFall") then
+                    HRP.FarmAntiFall.Velocity = Vector3.new(0,0,0)
                 end
             end
         else
