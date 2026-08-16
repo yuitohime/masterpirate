@@ -1,6 +1,6 @@
 -- ==========================================
--- DELTA UI V12 - ULTIMATE MAX (UPDATE TỐI THƯỢNG)
--- (SMART HAKI + SEA + RAID CLEAR CHECK + AUTO SAVE/LOAD + AUTO MENU + SCANNER MAP + INFINITE SKIP)
+-- DELTA UI V13 - ULTIMATE MAX (SIÊU BẢN VÁ & NÂNG CẤP)
+-- (FIX LỖI ĐƠ KHI CHẾT, FIX MUA RAID, LƯU QUÁI VĨNH VIỄN, AUTO FARM RAID ĐỘC LẬP, BẢNG QUÉT MÀU SẮC)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -17,68 +17,60 @@ local SafeParent = pcall(gethui) and gethui() or LocalPlayer:WaitForChild("Playe
 if SafeParent:FindFirstChild("V10_DeltaUI_Max") then SafeParent["V10_DeltaUI_Max"]:Destroy() end
 
 -- ==========================================
--- 📚 DATABASE & BIẾN GLOBAL
+-- 📚 DATABASE & BIẾN GLOBAL (LƯU VĨNH VIỄN)
 -- ==========================================
 local QuestDB = {
-    {Level = 1, QuestName = "Bandit [Lv. 1]", MobName = "Bandit", NPC = "Quest Giver"},
-    {Level = 10, QuestName = "Naval Student [Lv. 10]", MobName = "Naval Rating Student", NPC = "Quest Giver"},
-    {Level = 30, QuestName = "Pirate [Lv. 30]", MobName = "Pirate", NPC = "Quest Giver"},
+    {Level = 1, QuestName = "Bandit [Lv. 1]", MobName = "Bandit"},
+    {Level = 10, QuestName = "Naval Student [Lv. 10]", MobName = "Naval Rating Student"},
+    {Level = 30, QuestName = "Pirate [Lv. 30]", MobName = "Pirate"},
 }
 local QuestListNames = {}
 for i, v in ipairs(QuestDB) do table.insert(QuestListNames, v.QuestName) end
 
-local _G_V10 = {
+-- CẤU HÌNH MẶC ĐỊNH ĐỂ RESET
+local DefaultConfig = {
     AutoFarmFree = false, FarmAll = false, SelectedMonsters = {}, ExcludedMobs = {"dummy", "test dmg", "testdmg"},
     AutoFarmLevel = false, ManualQuestFarm = false, SelectedManualQuest = nil, CurrentTargetMob = nil,
     AutoEquip = false, AutoClick = false, AutoSkill = false, AutoRepeatQuest = false,
-    
     Skill_Z = false, Skill_X = false, Skill_C = false, Skill_V = false, Skill_F = false,
-    AutoHaki = false, AutoKen = false,
-    SelectedWeapon = nil, SelectedFruit = nil,
+    AutoHaki = false, AutoKen = false, SelectedWeapon = nil, SelectedFruit = nil,
     AttackPosition = "Trên Đầu", AttackDistance = 15, FlySpeed = 250,
-    
-    PrimaryWeapon = nil, HoldTime1 = 3,
-    W1_Z = false, W1_X = false, W1_C = false, W1_V = false, W1_B = false, W1_F = false,
-    SecondaryWeapon = nil, HoldTime2 = 0.5,
-    W2_Z = false, W2_X = false, W2_C = false, W2_V = false, W2_B = false, W2_F = false,
+    PrimaryWeapon = nil, HoldTime1 = 3, W1_Z = false, W1_X = false, W1_C = false, W1_V = false, W1_B = false, W1_F = false,
+    SecondaryWeapon = nil, HoldTime2 = 0.5, W2_Z = false, W2_X = false, W2_C = false, W2_V = false, W2_B = false, W2_F = false,
     AutoSwapWeapon = false, SkillSpamDelay = 0.1,
-    
     AutoSea = false, HuntSeaMonster = true, HuntGhost = true, AutoSitBoat = true, 
     SeaZone = Vector3.new(-15610, 39, 37071), IsFightingSea = false, ArrivedAtZone = false,
+    
+    AutoBuyRaid = false, AutoStartRaid = false, AutoJoinGame = false, AutoBypassMenu = false, AutoFarmRaid = false,
+    AutoTeleEntrance = false, AutoTeleReRaid = false, RaidEntranceDelay = 2, RaidReRaidDelay = 2,
 
-    AutoBuyRaid = false, AutoStartRaid = false, AutoJoinGame = false, AutoBypassMenu = false,
-    AutoTeleEntrance = false, AutoTeleReRaid = false, RaidTeleportDelay = 2,
-
-    AutoSpawnMihawk = false, MihawkAmount = "x1",
-    AutoGiveShadow = false, ShadowItem = "Shadow Spirit", ShadowAmount = "x1",
-
+    AutoSpawnMihawk = false, MihawkAmount = "x1", AutoGiveShadow = false, ShadowItem = "Shadow Spirit", ShadowAmount = "x1",
     SelectedIsland = nil, SelectedSpawnPoint = nil,
-    EnableSpeed = false, WalkSpeed = 50, EnableJump = false, JumpPower = 100, InfJump = false, DashNoCD = false,
-    FreeFly = false, FreeFlySpeed = 50,
-    
-    AutoSaveConfig = false, AutoLoadConfig = false, SelectedConfig = "DefaultConfig",
-    
-    AutoScanMap = false
+    EnableSpeed = false, WalkSpeed = 50, EnableJump = false, JumpPower = 100, InfJump = false, DashNoCD = false, FreeFly = false, FreeFlySpeed = 50,
+    AutoSaveConfig = false, AutoLoadConfig = false, SelectedConfig = "DefaultConfig", AutoScanMap = false
 }
 
+local _G_V10 = {}
+for k, v in pairs(DefaultConfig) do _G_V10[k] = v end
+
+-- DỮ LIỆU ĐƯỢC BẢO TỒN (KHÔNG BỊ RESET)
+_G_V10.ScannedMonstersList = {}
+_G_V10.ScannerData = {Mobs = {}, Bosses = {}}
+
 local _G_UI_Updaters = {}
-local _G_ScannerData = {Mobs = {}, Bosses = {}}
 
 -- ==========================================
 -- HỆ THỐNG LƯU CẤU HÌNH (MASTER AUTO SAVE/LOAD)
 -- ==========================================
-local ConfigFolder = "DeltaV12_Configs"
+local ConfigFolder = "DeltaV13_Configs"
 local MasterFile = ConfigFolder .. "/MasterSettings.json"
-
 if isfolder and not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
 
 local function SaveConfig(name)
     if not writefile then return end
-    name = name or "DefaultConfig"
-    _G_V10.SelectedConfig = name
+    name = name or "DefaultConfig"; _G_V10.SelectedConfig = name
     writefile(ConfigFolder.."/"..name..".json", HttpService:JSONEncode(_G_V10))
-    local masterData = {AutoLoadConfig = _G_V10.AutoLoadConfig, LastConfig = name}
-    writefile(MasterFile, HttpService:JSONEncode(masterData))
+    writefile(MasterFile, HttpService:JSONEncode({AutoLoadConfig = _G_V10.AutoLoadConfig, LastConfig = name}))
 end
 
 local function LoadConfig(name)
@@ -92,17 +84,12 @@ end
 
 if readfile and isfile(MasterFile) then
     local s, masterData = pcall(function() return HttpService:JSONDecode(readfile(MasterFile)) end)
-    if s and type(masterData) == "table" then
-        if masterData.AutoLoadConfig and masterData.LastConfig then
-            _G_V10.AutoLoadConfig = true
-            LoadConfig(masterData.LastConfig)
-        end
+    if s and type(masterData) == "table" and masterData.AutoLoadConfig and masterData.LastConfig then
+        _G_V10.AutoLoadConfig = true; LoadConfig(masterData.LastConfig)
     end
 end
 
-local function AutoSaveTrigger()
-    if _G_V10.AutoSaveConfig then SaveConfig(_G_V10.SelectedConfig) end
-end
+local function AutoSaveTrigger() if _G_V10.AutoSaveConfig then SaveConfig(_G_V10.SelectedConfig) end end
 
 local function GetConfigsList()
     local list = {}
@@ -131,10 +118,8 @@ Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(0, 200, 255)
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 45, 0, 45); ToggleBtn.Position = UDim2.new(0, 15, 0.5, -22)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20); ToggleBtn.BackgroundTransparency = 0.2
-ToggleBtn.Text = "⚙️"; ToggleBtn.TextColor3 = Color3.fromRGB(0, 200, 255)
-ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 22
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(0, 200, 255)
+ToggleBtn.Text = "⚙️"; ToggleBtn.TextColor3 = Color3.fromRGB(0, 200, 255); ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 22
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8); Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(0, 200, 255)
 ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
 local TopBar = Instance.new("Frame", MainFrame)
@@ -144,17 +129,16 @@ local FixCorner = Instance.new("Frame", TopBar)
 FixCorner.Size = UDim2.new(1, 0, 0, 10); FixCorner.Position = UDim2.new(0, 0, 1, -10); FixCorner.BackgroundColor3 = Color3.fromRGB(10, 10, 15); FixCorner.BorderSizePixel = 0
 
 local Title = Instance.new("TextLabel", TopBar)
-Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1; Title.Text = "AUTO FARM V12 (Ultimate Max)"
-Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 15, 0, 0); Title.BackgroundTransparency = 1
+Title.Text = "AUTO FARM V13 (Ultimate Max)"; Title.TextColor3 = Color3.fromRGB(0, 255, 255); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
 local MinBtn = Instance.new("TextButton", TopBar)
 MinBtn.Size = UDim2.new(0, 40, 0, 35); MinBtn.Position = UDim2.new(1, -80, 0, 0); MinBtn.BackgroundTransparency = 1
 MinBtn.Text = "-"; MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255); MinBtn.Font = Enum.Font.GothamBold; MinBtn.TextSize = 24
 MinBtn.MouseButton1Click:Connect(function()
-    local isMinimized = MainFrame.Size.Y.Offset == 35
-    MainFrame.Size = isMinimized and UDim2.new(0, 620, 0, 420) or UDim2.new(0, 620, 0, 35)
-    for _, v in pairs(MainFrame:GetChildren()) do if v.Name == "TabsFrame" or v.Name == "ContentFrame" then v.Visible = isMinimized end end
+    local isMin = MainFrame.Size.Y.Offset == 35
+    MainFrame.Size = isMin and UDim2.new(0, 620, 0, 420) or UDim2.new(0, 620, 0, 35)
+    for _, v in pairs(MainFrame:GetChildren()) do if v.Name == "TabsFrame" or v.Name == "ContentFrame" then v.Visible = isMin end end
 end)
 
 local CloseBtn = Instance.new("TextButton", TopBar)
@@ -165,8 +149,7 @@ CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 local TabsFrame = Instance.new("ScrollingFrame", MainFrame)
 TabsFrame.Name = "TabsFrame"; TabsFrame.Size = UDim2.new(0.28, 0, 1, -35); TabsFrame.Position = UDim2.new(0, 0, 0, 35)
 TabsFrame.BackgroundTransparency = 1; TabsFrame.ScrollBarThickness = 2; TabsFrame.CanvasSize = UDim2.new(0, 0, 0, 650)
-Instance.new("UIListLayout", TabsFrame).Padding = UDim.new(0, 5)
-Instance.new("UIPadding", TabsFrame).PaddingTop = UDim.new(0, 10)
+Instance.new("UIListLayout", TabsFrame).Padding = UDim.new(0, 5); Instance.new("UIPadding", TabsFrame).PaddingTop = UDim.new(0, 10)
 
 local ContentFrame = Instance.new("Frame", MainFrame)
 ContentFrame.Name = "ContentFrame"; ContentFrame.Size = UDim2.new(0.72, 0, 1, -35); ContentFrame.Position = UDim2.new(0.28, 0, 0, 35)
@@ -174,7 +157,7 @@ ContentFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ContentFrame.Backgro
 Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 8)
 
 -- ==========================================
--- HÀM TẠO UI COMPONENTS TÍCH HỢP AUTO LOAD
+-- HÀM TẠO UI COMPONENTS
 -- ==========================================
 local Pages = {}
 local function CreateTab(name)
@@ -183,14 +166,10 @@ local function CreateTab(name)
     Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35); Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
     Btn.Text = "  " .. name; Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 13; Btn.TextXAlignment = Enum.TextXAlignment.Left
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-
     local Page = Instance.new("ScrollingFrame", ContentFrame)
-    Page.Size = UDim2.new(1, 0, 1, 0); Page.BackgroundTransparency = 1
-    Page.ScrollBarThickness = 2; Page.Visible = false
+    Page.Size = UDim2.new(1, 0, 1, 0); Page.BackgroundTransparency = 1; Page.ScrollBarThickness = 2; Page.Visible = false
     Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
-    local pad = Instance.new("UIPadding", Page)
-    pad.PaddingTop, pad.PaddingLeft, pad.PaddingRight, pad.PaddingBottom = UDim.new(0,10), UDim.new(0,10), UDim.new(0,10), UDim.new(0,10)
-
+    local pad = Instance.new("UIPadding", Page); pad.PaddingTop, pad.PaddingLeft, pad.PaddingRight, pad.PaddingBottom = UDim.new(0,10), UDim.new(0,10), UDim.new(0,10), UDim.new(0,10)
     Pages[name] = {Btn = Btn, Page = Page}
     Btn.MouseButton1Click:Connect(function()
         for n, p in pairs(Pages) do
@@ -209,14 +188,12 @@ local function CreateToggleSwitch(parent, text, varName, isMasterLoad)
     local Lbl = Instance.new("TextLabel", Frame)
     Lbl.Size = UDim2.new(0.7, 0, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0); Lbl.BackgroundTransparency = 1
     Lbl.Text = text; Lbl.TextColor3 = Color3.fromRGB(255, 255, 255); Lbl.Font = Enum.Font.Gotham; Lbl.TextSize = 13; Lbl.TextXAlignment = Enum.TextXAlignment.Left
-    
     local SwitchBG = Instance.new("TextButton", Frame)
     SwitchBG.Size = UDim2.new(0, 40, 0, 20); SwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
     SwitchBG.BackgroundColor3 = Color3.fromRGB(100, 100, 100); SwitchBG.Text = ""
     Instance.new("UICorner", SwitchBG).CornerRadius = UDim.new(1, 0)
     local Knob = Instance.new("Frame", SwitchBG)
-    Knob.Size = UDim2.new(0, 16, 0, 16); Knob.Position = UDim2.new(0, 2, 0.5, -8)
-    Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Knob.Size = UDim2.new(0, 16, 0, 16); Knob.Position = UDim2.new(0, 2, 0.5, -8); Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
     local function UpdateVisuals()
@@ -251,9 +228,7 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
             local val = _G_V10[globalVar] or {}
             MainBtn.Text = "  " .. title .. ": [" .. #val .. " Đã Chọn] ▼"
             for _, btn in pairs(Drop:GetChildren()) do
-                if btn:IsA("TextButton") then
-                    btn.BackgroundColor3 = table.find(val, btn.Text) and Color3.fromRGB(0, 150, 150) or Color3.fromRGB(45, 45, 50)
-                end
+                if btn:IsA("TextButton") then btn.BackgroundColor3 = table.find(val, btn.Text) and Color3.fromRGB(0, 150, 150) or Color3.fromRGB(45, 45, 50) end
             end
         else
             local val = _G_V10[globalVar]
@@ -282,16 +257,15 @@ local function CreateDropdown(parent, title, itemsList, globalVar, multiSelect)
                 UpdateVisuals(); AutoSaveTrigger()
             end)
         end
-        Drop.CanvasSize = UDim2.new(0, 0, 0, #itemsList * 30)
-        UpdateVisuals()
+        Drop.CanvasSize = UDim2.new(0, 0, 0, #itemsList * 30); UpdateVisuals()
     end
     Refresh(itemsList); UpdateVisuals()
     return Refresh
 end
 
-local function CreateButton(parent, text, callback)
+local function CreateButton(parent, text, callback, color)
     local Btn = Instance.new("TextButton", parent)
-    Btn.Size = UDim2.new(1, 0, 0, 35); Btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    Btn.Size = UDim2.new(1, 0, 0, 35); Btn.BackgroundColor3 = color or Color3.fromRGB(0, 120, 200)
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255); Btn.Text = text; Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 13
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
     Btn.MouseButton1Click:Connect(callback)
@@ -397,12 +371,18 @@ TabConfig.Visible = true
 -- --- TAB: CONFIG (SAVE/LOAD) ---
 local DropConfigs = CreateDropdown(TabConfig, "Chọn Bản Lưu", GetConfigsList(), "SelectedConfig", false)
 local ConfigNameInput = "DefaultConfig"
-CreateTextBox(TabConfig, "Nhập tên cấu hình để lưu mới (VD: BeliFarm)", function(text) ConfigNameInput = text end)
+CreateTextBox(TabConfig, "Nhập tên cấu hình để lưu (VD: BeliFarm)", function(text) ConfigNameInput = text end)
 CreateButton(TabConfig, "💾 LƯU BẢN HIỆN TẠI (SAVE)", function() SaveConfig(ConfigNameInput ~= "" and ConfigNameInput or _G_V10.SelectedConfig); DropConfigs(GetConfigsList()); game.StarterGui:SetCore("SendNotification", {Title = "Lưu Thành Công", Text = "Đã lưu cấu hình hiện tại!", Duration = 3}) end)
 CreateButton(TabConfig, "📂 TẢI BẢN ĐÃ CHỌN (LOAD)", function() LoadConfig(_G_V10.SelectedConfig); game.StarterGui:SetCore("SendNotification", {Title = "Tải Thành Công", Text = "Đã tải cấu hình " .. _G_V10.SelectedConfig, Duration = 3}) end)
 CreateDivider(TabConfig, "CÔNG TẮC AUTO LƯU/TẢI", Color3.fromRGB(0, 200, 255))
 CreateToggleSwitch(TabConfig, "Bật Auto Lưu (Lưu mỗi khi thay đổi)", "AutoSaveConfig")
 CreateToggleSwitch(TabConfig, "Bật Auto Load (Khi vào lại game)", "AutoLoadConfig", true)
+CreateButton(TabConfig, "⚠️ RESET TOÀN BỘ MENU VỀ MẶC ĐỊNH", function()
+    for k, v in pairs(DefaultConfig) do _G_V10[k] = v end
+    for _, updater in pairs(_G_UI_Updaters) do pcall(updater) end
+    SaveConfig(_G_V10.SelectedConfig)
+    game.StarterGui:SetCore("SendNotification", {Title = "Reset", Text = "Đã làm mới toàn bộ Menu!", Duration = 3})
+end, Color3.fromRGB(200, 50, 50))
 
 -- --- TAB: FARM LEVEL ---
 local LblInfo = Instance.new("TextLabel", TabAutoLevel)
@@ -412,18 +392,17 @@ CreateDropdown(TabAutoLevel, "Chọn Quest Bằng Tay", QuestListNames, "Selecte
 CreateToggleSwitch(TabAutoLevel, "Bật Đánh Quest Đã Chọn Trên", "ManualQuestFarm")
 CreateToggleSwitch(TabAutoLevel, "Bật Tự Động Đánh (Click)", "AutoClick")
 
--- --- TAB: FARM TÙY CHỌN (MULTI-SELECT) ---
-local DropMonsters = CreateDropdown(TabFreeFarm, "Chọn Quái Cần Đánh (Nhiều Con)", {}, "SelectedMonsters", true)
-CreateButton(TabFreeFarm, "🔍 Quét Quái (Toàn bộ Map)", function()
-    local mobs = {}
+-- --- TAB: FARM TÙY CHỌN (MULTI-SELECT - LƯU VĨNH VIỄN) ---
+local DropMonsters = CreateDropdown(TabFreeFarm, "Chọn Quái Cần Đánh (Nhiều Con)", _G_V10.ScannedMonstersList, "SelectedMonsters", true)
+CreateButton(TabFreeFarm, "🔍 Quét Quái Thêm Vào Danh Sách", function()
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
             local isEx = false
             for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true; break end end
-            if not isEx and not table.find(mobs, v.Name) then table.insert(mobs, v.Name) end
+            if not isEx and not table.find(_G_V10.ScannedMonstersList, v.Name) then table.insert(_G_V10.ScannedMonstersList, v.Name) end
         end
     end
-    table.sort(mobs); DropMonsters(mobs)
+    table.sort(_G_V10.ScannedMonstersList); DropMonsters(_G_V10.ScannedMonstersList); AutoSaveTrigger()
 end)
 CreateToggleSwitch(TabFreeFarm, "Bật Free Farm (Đánh danh sách trên)", "AutoFarmFree")
 CreateToggleSwitch(TabFreeFarm, "Bật Farm ALL (Càn quét Map)", "FarmAll")
@@ -442,10 +421,15 @@ CreateToggleSwitch(TabRaid, "Bật Tự Động Bypass Main Menu (Click Play/Loa
 CreateToggleSwitch(TabRaid, "Bật Tự Động Mua Raid / Re-Raid", "AutoBuyRaid")
 CreateToggleSwitch(TabRaid, "Bật Tự Động Bấm Starto (Bắt đầu Raid)", "AutoStartRaid")
 CreateToggleSwitch(TabRaid, "Tự Động Bấm Play/Join Game (Dùng Remote)", "AutoJoinGame")
+
+CreateDivider(TabRaid, "AUTO FARM QUÁI TRONG RAID", Color3.fromRGB(255, 150, 50))
+CreateToggleSwitch(TabRaid, "Bật Auto Farm Quái Raid (Tự dọn dẹp map)", "AutoFarmRaid")
+
 CreateDivider(TabRaid, "TELEPORT RAID", Color3.fromRGB(255, 100, 100))
 CreateToggleSwitch(TabRaid, "Teleport Đến Cửa Raid (Ngoài Map)", "AutoTeleEntrance")
+CreateSlider(TabRaid, "Delay Teleport Ra Cửa Ngoài Map (Giây)", 1, 10, "RaidEntranceDelay")
 CreateToggleSwitch(TabRaid, "Teleport Vào Phòng Re-Raid (Chỉ khi HẾT QUÁI)", "AutoTeleReRaid")
-CreateSlider(TabRaid, "Delay Teleport Raid Sau Khi Xong (Giây)", 1, 10, "RaidTeleportDelay")
+CreateSlider(TabRaid, "Delay Teleport Sau Khi Hết Quái (Giây)", 1, 10, "RaidReRaidDelay")
 
 -- --- TAB: BOSS & SPAWN ---
 CreateDivider(TabBoss, "AUTO SPAWN MIHAWK", Color3.fromRGB(150, 100, 255))
@@ -486,7 +470,15 @@ CreateButton(TabIsland, "🚀 Dịch Chuyển (Teleport Tức Thời)", function
     end
 end)
 
--- --- TAB: SETTINGS & SKILL ---
+CreateToggleSwitch(TabPlayer, "Bật Hack Tốc Độ Chạy", "EnableSpeed")
+CreateSlider(TabPlayer, "Tốc Độ Chạy (WalkSpeed)", 16, 250, "WalkSpeed")
+CreateToggleSwitch(TabPlayer, "Bật Hack Nhảy Cao", "EnableJump")
+CreateSlider(TabPlayer, "Lực Nhảy (JumpPower)", 50, 300, "JumpPower")
+CreateToggleSwitch(TabPlayer, "Nhảy Vô Hạn (Infinity Jump)", "InfJump")
+CreateToggleSwitch(TabPlayer, "Lướt Không Hồi Chiêu (Dash No CD)", "DashNoCD")
+CreateToggleSwitch(TabPlayer, "🚀 Bay Tự Do (W,A,S,D + Space/Ctrl)", "FreeFly")
+CreateSlider(TabPlayer, "Tốc Độ Bay Tự Do", 50, 500, "FreeFlySpeed")
+
 CreateDivider(TabSettings, "AUTO ĐỔI VŨ KHÍ & XẢ SKILL SIÊU TỐC", Color3.fromRGB(0, 200, 255))
 CreateToggleSwitch(TabSettings, "Bật Tự Động Đổi Vũ Khí (1 <-> 2)", "AutoSwapWeapon")
 CreateSlider(TabSettings, "Min Delay Xả Skill (Giây)", 0.1, 5, "SkillSpamDelay")
@@ -516,32 +508,26 @@ CreateToggleSwitch(TabSkills, "Phím Z", "Skill_Z"); CreateToggleSwitch(TabSkill
 CreateToggleSwitch(TabSkills, "Phím C", "Skill_C"); CreateToggleSwitch(TabSkills, "Phím V", "Skill_V")
 CreateToggleSwitch(TabSkills, "Phím F", "Skill_F")
 
-CreateToggleSwitch(TabPlayer, "Bật Hack Tốc Độ Chạy", "EnableSpeed")
-CreateSlider(TabPlayer, "Tốc Độ Chạy (WalkSpeed)", 16, 250, "WalkSpeed")
-CreateToggleSwitch(TabPlayer, "Bật Hack Nhảy Cao", "EnableJump")
-CreateSlider(TabPlayer, "Lực Nhảy (JumpPower)", 50, 300, "JumpPower")
-CreateToggleSwitch(TabPlayer, "Nhảy Vô Hạn (Infinity Jump)", "InfJump")
-CreateToggleSwitch(TabPlayer, "Lướt Không Hồi Chiêu (Dash No CD)", "DashNoCD")
-CreateToggleSwitch(TabPlayer, "🚀 Bay Tự Do (W,A,S,D + Space/Ctrl)", "FreeFly")
-CreateSlider(TabPlayer, "Tốc Độ Bay Tự Do", 50, 500, "FreeFlySpeed")
-
--- --- TAB: MÁY QUÉT (NOTE & SCAN) ---
+-- --- TAB: MÁY QUÉT (NOTE & SCAN) BẢN MỚI ---
 CreateDivider(TabScanner, "HỆ THỐNG MÁY QUÉT TOÀN MAP", Color3.fromRGB(200, 100, 255))
 CreateToggleSwitch(TabScanner, "Bật Máy Quét Map Thông Minh", "AutoScanMap")
 
 local ScanLogFrame = Instance.new("ScrollingFrame", TabScanner)
-ScanLogFrame.Size = UDim2.new(1, 0, 0, 150); ScanLogFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+ScanLogFrame.Size = UDim2.new(1, 0, 0, 280); ScanLogFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 ScanLogFrame.ScrollBarThickness = 3
 local txtLog = Instance.new("TextLabel", ScanLogFrame)
 txtLog.Size = UDim2.new(1, -10, 1, 0); txtLog.BackgroundTransparency = 1
-txtLog.Text = "Dữ liệu trống..."; txtLog.TextColor3 = Color3.fromRGB(0, 255, 150)
+txtLog.RichText = true -- Bật chế độ màu sắc HTML
+txtLog.Text = "Đang chờ quét..."
 txtLog.TextXAlignment = Enum.TextXAlignment.Left; txtLog.TextYAlignment = Enum.TextYAlignment.Top
-txtLog.Font = Enum.Font.Code; txtLog.TextSize = 11; txtLog.TextWrapped = true
+txtLog.Font = Enum.Font.GothamBold; txtLog.TextSize = 12; txtLog.TextWrapped = true
 txtLog.Position = UDim2.new(0, 5, 0, 5)
 
 CreateButton(TabScanner, "📋 COPY TOÀN BỘ DATA MÁY QUÉT", function()
     if setclipboard then
-        setclipboard(txtLog.Text)
+        -- Dọn rác thẻ HTML trước khi copy
+        local cleanTxt = string.gsub(txtLog.Text, "<[^>]+>", "")
+        setclipboard(cleanTxt)
         game.StarterGui:SetCore("SendNotification", {Title = "Đã Copy", Text = "Dữ liệu đã nằm trong bộ nhớ tạm!", Duration = 3})
     end
 end)
@@ -587,7 +573,7 @@ local function PressKey(key)
 end
 
 -- ==========================================
--- ENGINE: MÁY QUÉT MAP
+-- ENGINE: MÁY QUÉT MAP THÔNG MINH
 -- ==========================================
 local function GetClosestIsland(pos)
     local islandsFolder = Workspace:FindFirstChild("All") and Workspace.All:FindFirstChild("Island")
@@ -601,9 +587,8 @@ local function GetClosestIsland(pos)
 end
 
 task.spawn(function()
-    while task.wait(2) do
+    while task.wait(3) do
         if not _G_V10.AutoScanMap then continue end
-        local logString = "=== DANH SÁCH BOSS ===\n"
         
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
@@ -611,27 +596,33 @@ task.spawn(function()
                 local hum = v:FindFirstChild("Humanoid")
                 if hrp and hum and hum.Health > 0 then
                     local nameStr = v.Name
-                    if not _G_ScannerData.Mobs[nameStr] then
+                    
+                    -- Loại bỏ dummy, test
+                    local isEx = false
+                    for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(nameStr), ex) then isEx = true; break end end
+                    
+                    if not isEx and not _G_V10.ScannerData.Mobs[nameStr] and not _G_V10.ScannerData.Bosses[nameStr] then
                         local isl = GetClosestIsland(hrp.Position)
                         local pos = string.format("Vector3.new(%.0f, %.0f, %.0f)", hrp.Position.X, hrp.Position.Y, hrp.Position.Z)
                         
-                        -- Phân biệt Boss (Máu trên 50k là boss)
-                        if hum.MaxHealth > 50000 then
-                            _G_ScannerData.Bosses[nameStr] = {Island = isl, Pos = pos}
-                        else
-                            _G_ScannerData.Mobs[nameStr] = {Island = isl, Pos = pos}
-                        end
+                        if hum.MaxHealth > 50000 then _G_V10.ScannerData.Bosses[nameStr] = {Island = isl, Pos = pos}
+                        else _G_V10.ScannerData.Mobs[nameStr] = {Island = isl, Pos = pos} end
                     end
                 end
             end
         end
         
-        for k, v in pairs(_G_ScannerData.Bosses) do logString = logString .. string.format("[ĐẢO: %s] | TÊN: %s | TỌA ĐỘ: %s\n", v.Island, k, v.Pos) end
-        logString = logString .. "\n=== DANH SÁCH QUÁI THƯỜNG ===\n"
-        for k, v in pairs(_G_ScannerData.Mobs) do logString = logString .. string.format("[ĐẢO: %s] | TÊN: %s | TỌA ĐỘ: %s\n", v.Island, k, v.Pos) end
+        local logStr = "<b><font color='#ff5555' size='15'>=== 👹 DANH SÁCH BOSS ===</font></b>\n"
+        for k, v in pairs(_G_V10.ScannerData.Bosses) do 
+            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Pos) 
+        end
+        logStr = logStr .. "\n<b><font color='#55aaff' size='15'>=== 👾 DANH SÁCH QUÁI ===</font></b>\n"
+        for k, v in pairs(_G_V10.ScannerData.Mobs) do 
+            logStr = logStr .. string.format("<b><font color='#ffff55'>[%s]</font></b> | <font color='#ffffff'>%s</font> | <font color='#55ff55'>%s</font>\n", v.Island, k, v.Pos) 
+        end
         
-        txtLog.Text = logString
-        ScanLogFrame.CanvasSize = UDim2.new(0, 0, 0, txtLog.TextBounds.Y + 20)
+        txtLog.Text = logStr
+        ScanLogFrame.CanvasSize = UDim2.new(0, 0, 0, txtLog.TextBounds.Y + 30)
     end
 end)
 
@@ -645,7 +636,6 @@ task.spawn(function()
             if pg then
                 local loadBtn = SmartFindButton(pg, "Load Data") or SmartFindButton(pg, "Load") or SmartFindButton(pg, "Accept")
                 local playBtn = SmartFindButton(pg, "Play") or SmartFindButton(pg, "Join")
-                
                 if loadBtn then PhysicalClick(loadBtn) end
                 if playBtn then PhysicalClick(playBtn) end
             end
@@ -655,11 +645,10 @@ end)
 
 -- ==========================================
 -- ENGINE: SPAM THOẠI CHO BOSS & SHADOW 
--- (LUÔN CHẠY KHI BẬT ĐỂ CHỐNG KẸT)
 -- ==========================================
 task.spawn(function()
     while task.wait(0.2) do
-        if _G_V10.AutoSpawnMihawk or _G_V10.AutoGiveShadow then
+        if _G_V10.AutoSpawnMihawk or _G_V10.AutoGiveShadow or _G_V10.AutoBuyRaid then
             local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
             if talkingGui then TapScreenEdge() end
         end
@@ -726,37 +715,44 @@ task.spawn(function()
         local distToReRaid = (hrp.Position - Vector3.new(-123, 114, 407)).Magnitude
         
         if distToReRaid < 3000 then 
+            -- TRONG MAP RAID
             if _G_V10.AutoStartRaid then pcall(function() ReplicatedStorage.Assets.Remote.RemoteEvent.Starto:FireServer() end) end
+            
             if _G_V10.AutoBuyRaid then
                 local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
                 if not talkingGui then
                     local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
-                    if npc then task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end) end
+                    if npc and npc:FindFirstChild("HumanoidRootPart") then
+                        if (hrp.Position - npc.HumanoidRootPart.Position).Magnitude > 20 then hrp.CFrame = npc.HumanoidRootPart.CFrame; task.wait(0.5) end
+                        task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
+                    end
                 else
                     local buyBtn = SmartFindButton(talkingGui, "Buy with Beli")
-                    if buyBtn then PhysicalClick(buyBtn) else TapScreenEdge() end
+                    if buyBtn then PhysicalClick(buyBtn) end
                 end
             end
             
             -- CHỈ TELEPORT KHI ĐÃ QUÉT SẠCH QUÁI TRONG RAID
             if _G_V10.AutoTeleReRaid and IsRaidClear() then
-                if os.clock() - lastRaidTeleport >= _G_V10.RaidTeleportDelay then
-                    hrp.CFrame = CFrame.new(-123, 114, 407); lastRaidTeleport = os.clock()
-                end
+                if os.clock() - lastRaidTeleport >= _G_V10.RaidReRaidDelay then hrp.CFrame = CFrame.new(-123, 114, 407); lastRaidTeleport = os.clock() end
             end
         else
+            -- NGOÀI MAP RAID
             if _G_V10.AutoBuyRaid then
                 local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
                 if not talkingGui then
                     local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
-                    if npc then task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end) end
+                    if npc and npc:FindFirstChild("HumanoidRootPart") then
+                        if (hrp.Position - npc.HumanoidRootPart.Position).Magnitude > 20 then hrp.CFrame = npc.HumanoidRootPart.CFrame; task.wait(0.5) end
+                        task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
+                    end
                 else
                     local buyBtn = SmartFindButton(talkingGui, "Buy with Beli")
-                    if buyBtn then PhysicalClick(buyBtn) else TapScreenEdge() end
+                    if buyBtn then PhysicalClick(buyBtn) end
                 end
             end
             
-            if _G_V10.AutoTeleEntrance and os.clock() - lastRaidTeleport >= _G_V10.RaidTeleportDelay then
+            if _G_V10.AutoTeleEntrance and os.clock() - lastRaidTeleport >= _G_V10.RaidEntranceDelay then
                 hrp.CFrame = CFrame.new(-1346, 79, 3989); lastRaidTeleport = os.clock()
             end
         end
@@ -766,10 +762,19 @@ end)
 -- ==========================================
 -- ENGINE: FARM LEVEL & WEAPON SWAP & SKILL
 -- ==========================================
+local function DisableAntiFall(HRP) if HRP:FindFirstChild("FarmAntiFall") then HRP.FarmAntiFall:Destroy() end end
+local function EnableAntiFall(HRP)
+    if not HRP:FindFirstChild("FarmAntiFall") then
+        local AntiFall = Instance.new("BodyVelocity"); AntiFall.Name = "FarmAntiFall"; AntiFall.MaxForce = Vector3.new(9e9, 9e9, 9e9); AntiFall.Velocity = Vector3.new(0, 0, 0); AntiFall.Parent = HRP
+    end
+end
+
 task.spawn(function()
     while task.wait(1) do
         local char = LocalPlayer.Character
-        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+        if not char then continue end
+        local hum = char:FindFirstChild("Humanoid")
+        if hum and hum.Health > 0 then
             if _G_V10.AutoHaki and not char:FindFirstChild("Haki") then PressKey("J") end
             if _G_V10.AutoKen then
                 local kenNode = char:FindFirstChild("Ken")
@@ -830,7 +835,7 @@ RunService.RenderStepped:Connect(function()
         local hrp = char.HumanoidRootPart
         local hum = char.Humanoid
         
-        if _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll or (_G_V10.AutoSea and _G_V10.IsFightingSea) or _G_V10.AutoStartRaid or _G_V10.AutoBuyRaid or _G_V10.AutoSpawnMihawk or _G_V10.AutoGiveShadow then
+        if _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll or (_G_V10.AutoSea and _G_V10.IsFightingSea) or _G_V10.AutoFarmRaid then
             for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         end
 
@@ -854,14 +859,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
-local function EnableAntiFall(HRP)
-    if not HRP:FindFirstChild("FarmAntiFall") then
-        local AntiFall = Instance.new("BodyVelocity")
-        AntiFall.Name = "FarmAntiFall"; AntiFall.MaxForce = Vector3.new(9e9, 9e9, 9e9); AntiFall.Velocity = Vector3.new(0, 0, 0); AntiFall.Parent = HRP
-    end
-end
-local function DisableAntiFall(HRP) if HRP:FindFirstChild("FarmAntiFall") then HRP.FarmAntiFall:Destroy() end end
 
 local function GetPlayerLevel()
     local lvl = 1
@@ -893,8 +890,16 @@ local lastSkillSpamTime = os.clock()
 task.spawn(function()
     while task.wait() do
         local char = LocalPlayer.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
-        local HRP = char.HumanoidRootPart
+        if not char then continue end
+        local HRP = char:FindFirstChild("HumanoidRootPart")
+        local Hum = char:FindFirstChild("Humanoid")
+        
+        -- Fix lỗi bị kẹt đứng im khi chết
+        if not HRP or not Hum or Hum.Health <= 0 then 
+            if HRP then DisableAntiFall(HRP) end 
+            task.wait(1) 
+            continue 
+        end
 
         _G_V10.CurrentTargetMob = nil
         if _G_V10.AutoFarmLevel then
@@ -904,28 +909,29 @@ task.spawn(function()
         elseif _G_V10.AutoFarmFree and type(_G_V10.SelectedMonsters) == "table" and #_G_V10.SelectedMonsters > 0 then
             _G_V10.CurrentTargetMob = _G_V10.SelectedMonsters; LblInfo.Text = "Đang Farm Tự Do"
         elseif _G_V10.FarmAll then LblInfo.Text = "Đang Càn Quét (Farm All)"
+        elseif _G_V10.AutoFarmRaid then LblInfo.Text = "Đang Dọn Dẹp Map Raid"
         else LblInfo.Text = "Đang rảnh rỗi..." end
 
         if _G_V10.AutoRepeatQuest then RepeatQuestRemote() end
 
-        local isNormalFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll
-        local isFarmingAction = isNormalFarming or (_G_V10.AutoSea and _G_V10.IsFightingSea) or _G_V10.AutoStartRaid or _G_V10.AutoBuyRaid or _G_V10.AutoSpawnMihawk or _G_V10.AutoGiveShadow
-
+        local isNormalFarming = _G_V10.AutoFarmLevel or _G_V10.ManualQuestFarm or _G_V10.AutoFarmFree or _G_V10.FarmAll or _G_V10.AutoFarmRaid
+        local isFarmingAction = isNormalFarming or (_G_V10.AutoSea and _G_V10.IsFightingSea)
+        
+        -- FIX: CHỈ LẤY VŨ KHÍ & XẢ SKILL KHI CÓ ISFARMINGACTION VÀ KHÔNG Ở TRẠNG THÁI GIAO TIẾP
         if isFarmingAction and not _G_V10.FreeFly then
-            -- VŨ KHÍ CHỈ HOẠT ĐỘNG KHI ĐANG FARM
             if _G_V10.AutoSwapWeapon and _G_V10.PrimaryWeapon and _G_V10.SecondaryWeapon then
                 if currentSwapState == 1 then
                     local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.PrimaryWeapon)
-                    if wp then char.Humanoid:EquipTool(wp) end
+                    if wp then Hum:EquipTool(wp) end
                     if os.clock() - lastSwapTime >= _G_V10.HoldTime1 then currentSwapState = 2; lastSwapTime = os.clock() end
                 elseif currentSwapState == 2 then
                     local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SecondaryWeapon)
-                    if wp then char.Humanoid:EquipTool(wp) end
+                    if wp then Hum:EquipTool(wp) end
                     if os.clock() - lastSwapTime >= _G_V10.HoldTime2 then currentSwapState = 1; lastSwapTime = os.clock() end
                 end
             elseif _G_V10.AutoEquip and _G_V10.SelectedWeapon then
                 local wp = LocalPlayer.Backpack:FindFirstChild(_G_V10.SelectedWeapon)
-                if wp then char.Humanoid:EquipTool(wp) end
+                if wp then Hum:EquipTool(wp) end
             end
 
             if _G_V10.AutoClick then
@@ -954,16 +960,23 @@ task.spawn(function()
                 local highestLevel = -1
                 local shortestDist = math.huge
                 
-                -- ƯU TIÊN LEVEL CAO TRƯỚC
+                -- ƯU TIÊN LEVEL CAO TRƯỚC VÀ XỬ LÝ AUTO RAID
                 for _, v in pairs(workspace:GetDescendants()) do
                     if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name and not Players:GetPlayerFromCharacter(v) then
                         local isValidTarget = false
-                        if _G_V10.FarmAll then
-                            local isEx = false
-                            for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
-                            if not isEx then isValidTarget = true end
-                        elseif _G_V10.CurrentTargetMob and type(_G_V10.CurrentTargetMob) == "table" and table.find(_G_V10.CurrentTargetMob, v.Name) then 
-                            isValidTarget = true 
+                        
+                        -- Lọc rác
+                        local isEx = false
+                        for _, ex in pairs(_G_V10.ExcludedMobs) do if string.find(string.lower(v.Name), ex) then isEx = true break end end
+                        
+                        if not isEx then
+                            if _G_V10.AutoFarmRaid and v.Parent and v.Parent.Name == "Monster" then
+                                local distToRaidMap = (HRP.Position - Vector3.new(-123, 114, 407)).Magnitude
+                                if distToRaidMap < 3000 then isValidTarget = true end
+                            elseif _G_V10.FarmAll then isValidTarget = true
+                            elseif _G_V10.CurrentTargetMob and type(_G_V10.CurrentTargetMob) == "table" and table.find(_G_V10.CurrentTargetMob, v.Name) then 
+                                isValidTarget = true 
+                            end
                         end
                         
                         if isValidTarget then
