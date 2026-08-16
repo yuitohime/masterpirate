@@ -1,6 +1,6 @@
 -- ==========================================
 -- 🌸 YUIHUB V1 - THE ULTIMATE SCRIPT
--- (CAPSULE ANIMATION, SMOOTH DRAG, SAFE TAP BYPASS, RAID PATROL AI C1-C2-C3)
+-- (CENTER CAPSULE ANIMATION, PERSISTENT TOGGLE, SAFE EDGE TAP, RAID PATROL, LƯU SCAN VĨNH VIỄN)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -43,7 +43,7 @@ local DefaultConfig = {
     
     AutoBuyRaid = false, AutoStartRaid = false, AutoJoinGame = false, AutoFarmRaid = false,
     AutoTeleEntrance = false, AutoTeleReRaid = false, RaidEntranceDelay = 2, RaidReRaidDelay = 2, RaidBuyTeleportDelay = 2,
-    RaidWaitC1 = "10", RaidWaitC2 = "10", RaidWaitC3 = "15", -- CƠ CHẾ TUẦN TRA PATROL
+    RaidWaitC1 = "10", RaidWaitC2 = "10", RaidWaitC3 = "15",
     
     AutoBypassMenu = true, BypassDuration = 10,
 
@@ -134,12 +134,12 @@ local function GetConfigsList()
 end
 
 -- ==========================================
--- GIAO DIỆN CHÍNH (YUI HUB V1) - CAPSULE ANIMATION
+-- GIAO DIỆN CHÍNH (YUI HUB V1) - BẤT TỬ TOGGLE & CENTER ANIMATION
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
 ScreenGui.Name = "YuiHub_UI"; ScreenGui.ResetOnSpawn = false
 
--- Nút Bông Hoa (Trạng thái ẩn)
+-- NÚT BÔNG HOA BẤT TỬ (LUÔN HIỆN)
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50); ToggleBtn.Position = UDim2.new(0, 15, 0.5, -25)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ToggleBtn.Text = "🌸"
@@ -147,9 +147,9 @@ ToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 200); ToggleBtn.Font = Enum.Font
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(255, 100, 200)
 
--- Khung Menu Chính
+-- KHUNG MENU CHÍNH
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 50, 0, 50) -- Bắt đầu từ hình viên thuốc nhỏ
+MainFrame.Size = UDim2.new(0, 50, 0, 50) -- Khởi đầu = Hình viên thuốc nhỏ ở giữa màn hình
 MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.1
@@ -161,19 +161,21 @@ Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 100, 200)
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 50); TopBar.BackgroundColor3 = Color3.fromRGB(10, 10, 15); TopBar.BackgroundTransparency = 1
 TopBar.Visible = false
+local DragPad = Instance.new("TextButton", TopBar)
+DragPad.Size = UDim2.new(1, -150, 1, 0); DragPad.BackgroundTransparency = 1; DragPad.Text = ""
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 20, 0, 0); Title.BackgroundTransparency = 1
 Title.Text = "🌸 YuiHub V1 (Ultimate)"; Title.TextColor3 = Color3.fromRGB(255, 100, 200); Title.Font = Enum.Font.GothamBold; Title.TextSize = 18; Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- NÚT GHIM (PIN) CHỐNG TRÔI
+-- NÚT GHIM (PIN)
 _G.IsPinned = false
 local PinBtn = Instance.new("TextButton", TopBar)
 PinBtn.Size = UDim2.new(0, 35, 0, 35); PinBtn.Position = UDim2.new(1, -120, 0, 7.5); PinBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-PinBtn.Text = "📌"; PinBtn.TextColor3 = Color3.fromRGB(255, 255, 255); PinBtn.Font = Enum.Font.GothamBold; PinBtn.TextSize = 16
+PinBtn.Text = "📌"; PinBtn.TextColor3 = Color3.fromRGB(255, 255, 255); PinBtn.Font = Enum.Font.GothamBold; PinBtn.TextSize = 18
 Instance.new("UICorner", PinBtn).CornerRadius = UDim.new(1, 0)
 PinBtn.MouseButton1Click:Connect(function()
-    _G.IsPinned = not _G.IsPinned
+    _G.IsPinned = not _G.IsPinned; MainFrame.Draggable = not _G.IsPinned
     PinBtn.BackgroundColor3 = _G.IsPinned and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(50, 50, 55)
     PinBtn.Text = _G.IsPinned and "📍" or "📌"
 end)
@@ -202,13 +204,13 @@ ContentFrame.Visible = false
 
 -- ================= CƠ CHẾ KÉO MENU MƯỢT MÀ =================
 local dragging, dragInput, dragStart, startPos
-MainFrame.InputBegan:Connect(function(input)
+DragPad.InputBegan:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not _G.IsPinned then
         dragging = true; dragStart = input.Position; startPos = MainFrame.Position
         input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
     end
 end)
-MainFrame.InputChanged:Connect(function(input)
+DragPad.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
 end)
 UIS.InputChanged:Connect(function(input)
@@ -219,34 +221,28 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 -- ================= HOẠT ẢNH CUỘN MỞ/ĐÓNG =================
+local function CloseMenuAnimation()
+    TabsFrame.Visible = false; ContentFrame.Visible = false
+    local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 0.5, -25)})
+    tw1:Play(); tw1.Completed:Wait(); TopBar.Visible = false
+    local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 50, 0, 50), Position = UDim2.new(0.5, -25, 0.5, -25)})
+    tw2:Play(); tw2.Completed:Wait(); MainFrame.Visible = false
+end
+
 ToggleBtn.MouseButton1Click:Connect(function()
-    ToggleBtn.Visible = false
-    MainFrame.Size = UDim2.new(0, 50, 0, 50)
-    MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25)
-    MainFrame.Visible = true
-    
-    local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(0.5, -310, 0.5, -25)})
-    tw1:Play(); tw1.Completed:Wait()
-    TopBar.Visible = true
-    
-    local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 420), Position = UDim2.new(0.5, -310, 0.5, -210)})
-    tw2:Play(); tw2.Completed:Wait()
-    
-    TabsFrame.Visible = true; ContentFrame.Visible = true
+    if MainFrame.Visible then
+        CloseMenuAnimation()
+    else
+        MainFrame.Size = UDim2.new(0, 50, 0, 50); MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25); MainFrame.Visible = true
+        local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(0.5, -310, 0.5, -25)})
+        tw1:Play(); tw1.Completed:Wait(); TopBar.Visible = true
+        local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 420), Position = UDim2.new(0.5, -310, 0.5, -210)})
+        tw2:Play(); tw2.Completed:Wait()
+        TabsFrame.Visible = true; ContentFrame.Visible = true
+    end
 end)
 
-CloseBtn.MouseButton1Click:Connect(function()
-    TabsFrame.Visible = false; ContentFrame.Visible = false
-    
-    local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 0.5, -25)})
-    tw1:Play(); tw1.Completed:Wait()
-    TopBar.Visible = false
-    
-    local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 50, 0, 50), Position = UDim2.new(0.5, -25, 0.5, -25)})
-    tw2:Play(); tw2.Completed:Wait()
-    
-    MainFrame.Visible = false; ToggleBtn.Visible = true
-end)
+CloseBtn.MouseButton1Click:Connect(CloseMenuAnimation)
 
 MinBtn.MouseButton1Click:Connect(function()
     local isMin = MainFrame.Size.Y.Offset == 50
@@ -259,10 +255,10 @@ MinBtn.MouseButton1Click:Connect(function()
     if isMin then tw.Completed:Connect(function() TabsFrame.Visible = true; ContentFrame.Visible = true end) end
 end)
 
--- Tự động bung bảng lần đầu
+-- Tự động bung bảng lần đầu khi chạy
 task.spawn(function()
     task.wait(1)
-    ToggleBtn.Visible = false; MainFrame.Visible = true
+    MainFrame.Size = UDim2.new(0, 50, 0, 50); MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25); MainFrame.Visible = true
     local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(0.5, -310, 0.5, -25)})
     tw1:Play(); tw1.Completed:Wait(); TopBar.Visible = true
     local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 420), Position = UDim2.new(0.5, -310, 0.5, -210)})
@@ -687,14 +683,10 @@ local function PhysicalClick(guiObj)
     task.wait(0.05); VIM:SendMouseButtonEvent(center.X, center.Y + inset.Y, 0, false, game, 0)
 end
 
--- FIX: Chạm góc chuẩn bên cạnh Hide GUI (X ~ 65% màn hình)
+-- 🚀 [FIX KHẨN CẤP]: Chạm mép trên cùng X=150, Y=20. Tuyệt đối xa Logo Roblox và chữ EXIT!
 local function TapSafeCorner()
-    local cam = workspace.CurrentCamera
-    if cam then
-        local safeX = cam.ViewportSize.X * 0.65 
-        VIM:SendMouseButtonEvent(safeX, 45, 0, true, game, 0)
-        task.wait(0.05); VIM:SendMouseButtonEvent(safeX, 45, 0, false, game, 0)
-    end
+    VIM:SendMouseButtonEvent(150, 20, 0, true, game, 0)
+    task.wait(0.05); VIM:SendMouseButtonEvent(150, 20, 0, false, game, 0)
 end
 
 local function SmartFindButton(gui, searchText)
@@ -778,7 +770,7 @@ task.spawn(function()
             if loadBtn then PhysicalClick(loadBtn) end
             if playBtn then PhysicalClick(playBtn) end
         end
-        TapSafeCorner() -- Góc phải tránh Roblox Icon
+        TapSafeCorner() -- Gõ mép an toàn X=150, Y=20
     end
 end)
 
@@ -838,9 +830,9 @@ end)
 -- ==========================================
 local raidPatrolState = "Wait_C1"
 local raidPatrolTimer = os.clock()
-local C1 = Vector3.new(-77, 119, -258)
-local C2 = Vector3.new(-101, 114, 382)
-local C3 = Vector3.new(-124, 114, 404)
+local C1 = CFrame.new(-77, 119, -258)
+local C2 = CFrame.new(-101, 114, 382)
+local C3 = CFrame.new(-124, 114, 404)
 local lastRaidTeleport = os.clock()
 
 local function IsRaidClear()
@@ -1055,14 +1047,14 @@ task.spawn(function()
 
         _G_V10.CurrentTargetMob = nil
         if _G_V10.AutoFarmLevel then
-            local mob, qName = GetMobForCurrentLevel(); _G_V10.CurrentTargetMob = {mob}; LblInfo.Text = "Farm Level: " .. qName
+            local mob, qName = GetMobForCurrentLevel(); _G_V10.CurrentTargetMob = {mob}; Title.Text = "🌸 YuiHub V1 (Farm: " .. qName .. ")"
         elseif _G_V10.ManualQuestFarm and _G_V10.SelectedManualQuest then
-            for _, v in pairs(QuestDB) do if v.QuestName == _G_V10.SelectedManualQuest then _G_V10.CurrentTargetMob = {v.MobName}; LblInfo.Text = "Farm Thủ Công: " .. v.QuestName end end
+            for _, v in pairs(QuestDB) do if v.QuestName == _G_V10.SelectedManualQuest then _G_V10.CurrentTargetMob = {v.MobName}; Title.Text = "🌸 YuiHub V1 (Farm: " .. v.QuestName .. ")" end end
         elseif _G_V10.AutoFarmFree and type(_G_V10.SelectedMonsters) == "table" and #_G_V10.SelectedMonsters > 0 then
-            _G_V10.CurrentTargetMob = _G_V10.SelectedMonsters; LblInfo.Text = "Đang Farm Tự Do"
-        elseif _G_V10.FarmAll then LblInfo.Text = "Đang Càn Quét (Farm All)"
-        elseif _G_V10.AutoFarmRaid then LblInfo.Text = "Đang Dọn Dẹp Map Raid"
-        else LblInfo.Text = "Đang rảnh rỗi..." end
+            _G_V10.CurrentTargetMob = _G_V10.SelectedMonsters; Title.Text = "🌸 YuiHub V1 (Đang Farm Tự Do)"
+        elseif _G_V10.FarmAll then Title.Text = "🌸 YuiHub V1 (Đang Càn Quét)"
+        elseif _G_V10.AutoFarmRaid then Title.Text = "🌸 YuiHub V1 (Đang Dọn Raid)"
+        else Title.Text = "🌸 YuiHub V1 (Ultimate)" end
 
         if _G_V10.AutoRepeatQuest then RepeatQuestRemote() end
 
@@ -1158,15 +1150,15 @@ task.spawn(function()
                 if _G_V10.AutoFarmRaid then
                     local distToRaidMap = (HRP.Position - Vector3.new(-123, 114, 407)).Magnitude
                     if distToRaidMap < 3000 then
-                        LblInfo.Text = "Raid: Tuần tra " .. raidPatrolState
+                        Title.Text = "🌸 YuiHub V1 (Tuần tra: " .. raidPatrolState .. ")"
                         if raidPatrolState == "Wait_C1" then
-                            if (HRP.Position - C1).Magnitude > 10 then HRP.CFrame = CFrame.new(C1); raidPatrolTimer = os.clock()
+                            if (HRP.Position - C1.Position).Magnitude > 10 then HRP.CFrame = C1; raidPatrolTimer = os.clock()
                             elseif os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC1) then raidPatrolState = "Wait_C2"; raidPatrolTimer = os.clock() end
                         elseif raidPatrolState == "Wait_C2" then
-                            if (HRP.Position - C2).Magnitude > 10 then HRP.CFrame = CFrame.new(C2); raidPatrolTimer = os.clock()
+                            if (HRP.Position - C2.Position).Magnitude > 10 then HRP.CFrame = C2; raidPatrolTimer = os.clock()
                             elseif os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC2) then raidPatrolState = "Wait_C3"; raidPatrolTimer = os.clock() end
                         elseif raidPatrolState == "Wait_C3" then
-                            if (HRP.Position - C3).Magnitude > 10 then HRP.CFrame = CFrame.new(C3); raidPatrolTimer = os.clock()
+                            if (HRP.Position - C3.Position).Magnitude > 10 then HRP.CFrame = C3; raidPatrolTimer = os.clock()
                             elseif os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC3) then raidPatrolState = "Wait_C2"; raidPatrolTimer = os.clock() end
                         end
                     end
@@ -1200,7 +1192,7 @@ task.spawn(function()
     while task.wait() do 
         if not _G_V10.AutoSea then 
             if wasAutoSeaOn then VIM:SendKeyEvent(false, Enum.KeyCode.W, false, game); wasAutoSeaOn = false end
-            LblSeaInfo.Text = "Trạng thái Biển: Đã tắt."; _G_V10.ArrivedAtZone = false; continue 
+            _G_V10.ArrivedAtZone = false; continue 
         else wasAutoSeaOn = true end
         
         local char = LocalPlayer.Character
@@ -1214,7 +1206,7 @@ task.spawn(function()
         local myBoat = boatFolder and boatFolder:FindFirstChild(myBoatName)
 
         if targetMonster then
-            _G_V10.IsFightingSea = true; LblSeaInfo.Text = "Trạng thái Biển: Đang tiêu diệt " .. targetMonster.Name
+            _G_V10.IsFightingSea = true;
             VIM:SendKeyEvent(false, Enum.KeyCode.W, false, game)
             if Hum.Sit then Hum.Sit = false end
             
@@ -1228,7 +1220,7 @@ task.spawn(function()
         else
             if _G_V10.IsFightingSea then _G_V10.IsFightingSea = false; VIM:SendKeyEvent(false, Enum.KeyCode.W, false, game) end
             if not myBoat then
-                _G_V10.ArrivedAtZone = false; LblSeaInfo.Text = "Trạng thái Biển: Đang mua thuyền mới..."
+                _G_V10.ArrivedAtZone = false;
                 local spawner = workspace:FindFirstChild("NPC") and workspace.NPC:FindFirstChild("BoatSpawner")
                 if spawner and spawner:FindFirstChild("LowerTorso") then
                     HRP.CFrame = spawner.LowerTorso.CFrame * CFrame.new(0, 0, 4); task.wait(0.5)
@@ -1238,14 +1230,12 @@ task.spawn(function()
                 local seat = myBoat:FindFirstChild("VehicleSeat", true)
                 if seat then
                     if not _G_V10.ArrivedAtZone then
-                        LblSeaInfo.Text = "Trạng thái Biển: Teleport thuyền ra biển 4 (1 Lần)..."
                         if Hum.Sit then Hum.Sit = false; task.wait(0.2) end
                         if myBoat:IsA("Model") and myBoat.PrimaryPart then myBoat:PivotTo(CFrame.new(_G_V10.SeaZone)) else seat.CFrame = CFrame.new(_G_V10.SeaZone) end
                         task.wait(0.3)
                         if _G_V10.AutoSitBoat then HRP.CFrame = seat.CFrame + Vector3.new(0, 3, 0); task.wait(0.1); seat:Sit(Hum) end
                         _G_V10.ArrivedAtZone = true 
                     else
-                        LblSeaInfo.Text = "Trạng thái Biển: Đang Auto Drive vô tận..."
                         if _G_V10.AutoSitBoat and not Hum.Sit then HRP.CFrame = seat.CFrame; task.wait(0.1); seat:Sit(Hum) end
                         VIM:SendKeyEvent(true, Enum.KeyCode.W, false, game)
                     end
