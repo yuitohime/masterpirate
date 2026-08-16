@@ -1,11 +1,12 @@
 -- ==========================================
--- 🛠️ TEST MENU: SMART AUTO BOSS & RAID (VIRTUAL TAP BYPASS)
+-- 🛠️ TEST MENU V3: PHYSICAL CLICK & FLAT LOOP (CHỐNG ĐƠ TUYỆT ĐỐI)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local VIM = game:GetService("VirtualInputManager")
+local GuiService = game:GetService("GuiService")
 
 local SafeParent = pcall(gethui) and gethui() or LocalPlayer:WaitForChild("PlayerGui")
 if SafeParent:FindFirstChild("TestSmart_Menu") then SafeParent["TestSmart_Menu"]:Destroy() end
@@ -26,7 +27,7 @@ Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(0, 255, 150)
 
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 30); Title.BackgroundTransparency = 1
-Title.Text = "🛠️ TEST V2: VIRTUAL TAP BYPASS"; Title.TextColor3 = Color3.fromRGB(0, 255, 150)
+Title.Text = "🛠️ TEST V3: PHYSICAL CLICK BYPASS"; Title.TextColor3 = Color3.fromRGB(0, 255, 150)
 Title.Font = Enum.Font.GothamBold; Title.TextSize = 14
 
 local CloseBtn = Instance.new("TextButton", MainFrame)
@@ -107,40 +108,47 @@ CreateToggle(220, "Bật Auto Give Shadow", "Shadow")
 CreateDivider(260, "MUA RAID")
 CreateToggle(280, "Bật Auto Mua Raid (Buy with Beli)", "Raid")
 
--- ================= HÀM HỖ TRỢ LÕI THÔNG MINH =================
+-- ================= HÀM HỖ TRỢ LÕI ĐỈNH CAO =================
 
--- Giả lập một cú chạm tay vào chính giữa màn hình (Skip thoại bất bại)
-local function SimulateScreenTap()
-    local cam = workspace.CurrentCamera
-    if cam then
-        local centerX = cam.ViewportSize.X / 2
-        local centerY = cam.ViewportSize.Y / 2
-        VIM:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
-        task.wait(0.05)
-        VIM:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
-    end
+-- 1. Bấm Vật Lý Bằng Tọa Độ (Không sợ LocalScript chặn)
+local function PhysicalClick(guiObj)
+    if not guiObj then return end
+    
+    -- Lấy Inset của điện thoại (Tai thỏ, viền) để bù trừ tọa độ cho chuẩn xác 100%
+    local inset = GuiService:GetGuiInset()
+    local center = guiObj.AbsolutePosition + (guiObj.AbsoluteSize / 2)
+    
+    local finalX = center.X
+    local finalY = center.Y + inset.Y
+
+    -- Giả lập chạm tay vào đúng tọa độ của nút
+    VIM:SendMouseButtonEvent(finalX, finalY, 0, true, game, 0)
+    task.wait(0.05)
+    VIM:SendMouseButtonEvent(finalX, finalY, 0, false, game, 0)
 end
 
--- Bấm Option
-local function FireVirtualButton(btn)
-    if getconnections then
-        for _, c in pairs(getconnections(btn.MouseButton1Click)) do c:Fire() end
-        for _, c in pairs(getconnections(btn.MouseButton1Down)) do c:Fire() end
-    elseif firesignal then firesignal(btn.MouseButton1Click) end
+-- 2. Chạm vào sát Mép màn hình (Skip thoại không xung đột)
+local function TapScreenEdge()
+    VIM:SendMouseButtonEvent(5, 50, 0, true, game, 0)
+    task.wait(0.05)
+    VIM:SendMouseButtonEvent(5, 50, 0, false, game, 0)
 end
 
+-- 3. Tìm nút thông minh
 local function SmartFindButton(gui, searchText)
-    for i = 1, 6 do
-        local btn = gui:FindFirstChild("Button" .. tostring(i), true)
-        if btn then
-            if btn.Text and string.find(string.lower(btn.Text), string.lower(searchText)) then return btn end
-            local txtChild = btn:FindFirstChildWhichIsA("TextLabel")
-            if txtChild and txtChild.Text and string.find(string.lower(txtChild.Text), string.lower(searchText)) then return btn end
+    for _, obj in pairs(gui:GetDescendants()) do
+        if obj:IsA("TextButton") or obj:IsA("ImageButton") then
+            -- Check chính nó
+            if obj:IsA("TextButton") and obj.Text and string.find(string.lower(obj.Text), string.lower(searchText)) then return obj end
+            -- Check TextLabel con của nó
+            local txtChild = obj:FindFirstChildWhichIsA("TextLabel")
+            if txtChild and txtChild.Text and string.find(string.lower(txtChild.Text), string.lower(searchText)) then return obj end
         end
     end
     return nil
 end
 
+-- 4. Teleport Thông minh
 local function SmartTeleport(targetPos)
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -155,38 +163,38 @@ local function SmartTeleport(targetPos)
     return true
 end
 
--- ================= LOGIC XỬ LÝ CHÍNH =================
+-- ================= LOGIC VÒNG LẶP PHẲNG (KHÔNG BAO GIỜ ĐƠ) =================
 
 -- 🟢 1. LOGIC MIHAWK
 task.spawn(function()
-    while task.wait(1) do
+    while task.wait(0.1) do -- Chạy siêu tốc
         if not _G.Test_Mihawk then continue end
         
         if SmartTeleport(Vector3.new(-1380, 77, 3904)) then
-            local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Stone Statue")
-            if not npc then StatusLbl.Text = "Trạng thái: Chưa tìm thấy Stone Statue!"; continue end
+            local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
             
-            StatusLbl.Text = "Trạng thái: Đang gọi Mihawk..."
-            -- NHỐT LỆNH GỌI NPC VÀO LUỒNG RIÊNG ĐỂ KHÔNG BỊ ĐƠ KHI HỦY
-            task.spawn(function()
-                pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end)
-            end)
-            
-            local timeout = 25
-            while timeout > 0 and _G.Test_Mihawk do
-                task.wait(0.2); timeout = timeout - 1
-                local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
-                if talkingGui then
-                    -- Bấm thẳng vào giữa màn hình để skip chữ
-                    SimulateScreenTap()
+            if not talkingGui then
+                -- NẾU KHÔNG CÓ BẢNG THOẠI -> GỌI NPC
+                local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Stone Statue")
+                if npc then
+                    StatusLbl.Text = "Trạng thái: Đang gọi Mihawk..."
+                    task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
+                    task.wait(0.5) -- Đợi bảng thoại nảy lên
+                end
+            else
+                -- NẾU CÓ BẢNG THOẠI -> QUÉT TÌM NÚT
+                local amtBtn = SmartFindButton(talkingGui, _G.MihawkAmt)
+                if amtBtn then
+                    StatusLbl.Text = "Trạng thái: Đang bấm Physical Click vào " .. _G.MihawkAmt
+                    PhysicalClick(amtBtn)
+                    task.wait(1) -- Tránh spam bấm 1 lựa chọn
+                else
+                    -- Không thấy nút chọn -> Đang bị kẹt ở phần chữ -> Nháy mép màn hình
+                    TapScreenEdge()
                     
-                    local amtBtn = SmartFindButton(talkingGui, _G.MihawkAmt)
-                    if amtBtn then
-                        StatusLbl.Text = "Trạng thái: Đã chọn " .. _G.MihawkAmt .. "!"
-                        FireVirtualButton(amtBtn)
-                        task.wait(2)
-                        break
-                    end
+                    -- Tìm thử xem có nút tàng hình Click ko, nếu có thì ép bấm luôn
+                    local clickBtn = talkingGui:FindFirstChild("Click", true)
+                    if clickBtn then PhysicalClick(clickBtn) end
                 end
             end
         end
@@ -195,44 +203,38 @@ end)
 
 -- 🟢 2. LOGIC SHADOW
 task.spawn(function()
-    while task.wait(1) do
+    while task.wait(0.1) do
         if not _G.Test_Shadow then continue end
         
         if SmartTeleport(Vector3.new(-10371, 100, -3519)) then
-            local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Shadow 1")
-            if not npc then StatusLbl.Text = "Trạng thái: Chưa tìm thấy Shadow 1!"; continue end
+            local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
             
-            StatusLbl.Text = "Trạng thái: Đang nói chuyện với Shadow..."
-            task.spawn(function()
-                pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end)
-            end)
-            
-            local phase = 1
-            local timeout = 40
-            while timeout > 0 and _G.Test_Shadow do
-                task.wait(0.2); timeout = timeout - 1
-                local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
-                if talkingGui then
-                    SimulateScreenTap() -- Skip thoại liên tục
-                    
-                    if phase == 1 then
-                        local itemBtn = SmartFindButton(talkingGui, _G.ShadowItem)
-                        if itemBtn then
-                            StatusLbl.Text = "Trạng thái: Đã chọn " .. _G.ShadowItem
-                            FireVirtualButton(itemBtn)
-                            phase = 2
-                            task.wait(1) -- Đợi bảng số lượng Load ra
-                            continue
-                        end
-                    elseif phase == 2 then
-                        local amtBtn = SmartFindButton(talkingGui, _G.ShadowAmt)
-                        if amtBtn then
-                            StatusLbl.Text = "Trạng thái: Đã give " .. _G.ShadowAmt .. " cái!"
-                            FireVirtualButton(amtBtn)
-                            task.wait(2)
-                            break
-                        end
-                    end
+            if not talkingGui then
+                -- GỌI NPC
+                local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Shadow 1")
+                if npc then
+                    StatusLbl.Text = "Trạng thái: Đang gọi Shadow..."
+                    task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
+                    task.wait(0.5)
+                end
+            else
+                -- TÌM NÚT VẬT PHẨM VÀ SỐ LƯỢNG (Không cần chia phase, cứ thấy là bấm)
+                local itemBtn = SmartFindButton(talkingGui, _G.ShadowItem)
+                local amtBtn = SmartFindButton(talkingGui, _G.ShadowAmt)
+                
+                if itemBtn then
+                    StatusLbl.Text = "Trạng thái: Đang chọn Vật Phẩm..."
+                    PhysicalClick(itemBtn)
+                    task.wait(1)
+                elseif amtBtn then
+                    StatusLbl.Text = "Trạng thái: Đang chọn Số Lượng..."
+                    PhysicalClick(amtBtn)
+                    task.wait(1)
+                else
+                    -- Không thấy lựa chọn nào -> Đang kẹt ở đoạn lảm nhảm -> Skip!
+                    TapScreenEdge()
+                    local clickBtn = talkingGui:FindFirstChild("Click", true)
+                    if clickBtn then PhysicalClick(clickBtn) end
                 end
             end
         end
@@ -241,32 +243,32 @@ end)
 
 -- 🟢 3. LOGIC MUA RAID
 task.spawn(function()
-    while task.wait(1) do
+    while task.wait(0.1) do
         if not _G.Test_Raid then continue end
         
         if SmartTeleport(Vector3.new(-1371, 79, 3982)) then
-            local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
-            if not npc then StatusLbl.Text = "Trạng thái: Chưa tìm thấy Dazzl!"; continue end
+            local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
             
-            StatusLbl.Text = "Trạng thái: Đang mua Raid..."
-            task.spawn(function()
-                pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end)
-            end)
-            
-            local timeout = 25
-            while timeout > 0 and _G.Test_Raid do
-                task.wait(0.2); timeout = timeout - 1
-                local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
-                if talkingGui then
-                    SimulateScreenTap()
-                    
-                    local buyBtn = SmartFindButton(talkingGui, "Buy with Beli")
-                    if buyBtn then
-                        StatusLbl.Text = "Trạng thái: Đã Mua Raid Bằng Beli!"
-                        FireVirtualButton(buyBtn)
-                        task.wait(2)
-                        break
-                    end
+            if not talkingGui then
+                -- GỌI NPC
+                local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
+                if npc then
+                    StatusLbl.Text = "Trạng thái: Đang gọi Dazzl..."
+                    task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
+                    task.wait(0.5)
+                end
+            else
+                -- TÌM LỰA CHỌN
+                local buyBtn = SmartFindButton(talkingGui, "Buy with Beli")
+                if buyBtn then
+                    StatusLbl.Text = "Trạng thái: Đang bấm Physical Click Mua Raid!"
+                    PhysicalClick(buyBtn)
+                    task.wait(2) -- Mua xong đợi 2s để game tải
+                else
+                    -- Đang kẹt ở chữ -> Skip
+                    TapScreenEdge()
+                    local clickBtn = talkingGui:FindFirstChild("Click", true)
+                    if clickBtn then PhysicalClick(clickBtn) end
                 end
             end
         end
