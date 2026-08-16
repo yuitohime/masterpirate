@@ -1,6 +1,6 @@
 -- ==========================================
--- YUI HUB V1 - THE ULTIMATE SCRIPT
--- (CAPSULE ANIMATION, PIN MENU, SAFE TAP, RAID PATROL C1-C2-C3, LƯU SCAN VĨNH VIỄN, ANTI-FALL)
+-- 🌸 YUIHUB V1 - THE ULTIMATE SCRIPT
+-- (CAPSULE ANIMATION, SMOOTH DRAG, SAFE TAP BYPASS, RAID PATROL AI C1-C2-C3)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -43,7 +43,7 @@ local DefaultConfig = {
     
     AutoBuyRaid = false, AutoStartRaid = false, AutoJoinGame = false, AutoFarmRaid = false,
     AutoTeleEntrance = false, AutoTeleReRaid = false, RaidEntranceDelay = 2, RaidReRaidDelay = 2, RaidBuyTeleportDelay = 2,
-    RaidWaitC1 = "10", RaidWaitC2 = "10", -- BIẾN MỚI CHO TUẦN TRA RAID
+    RaidWaitC1 = "10", RaidWaitC2 = "10", RaidWaitC3 = "15", -- CƠ CHẾ TUẦN TRA PATROL
     
     AutoBypassMenu = true, BypassDuration = 10,
 
@@ -63,7 +63,7 @@ for k, v in pairs(DefaultConfig) do _G_V10[k] = v end
 local _G_UI_Updaters = {}
 
 -- ==========================================
--- HỆ THỐNG LƯU CẤU HÌNH (MASTER AUTO SAVE/LOAD)
+-- HỆ THỐNG LƯU CẤU HÌNH VĨNH VIỄN
 -- ==========================================
 local ConfigFolder = "YuiHub_Configs"
 local MasterFile = ConfigFolder .. "/MasterSettings.json"
@@ -134,55 +134,46 @@ local function GetConfigsList()
 end
 
 -- ==========================================
--- TẠO MÀN HÌNH ĐEN (BLACK SCREEN)
--- ==========================================
-local BlackScreenUI = Instance.new("ScreenGui", SafeParent)
-BlackScreenUI.Name = "V14_BlackScreen"; BlackScreenUI.DisplayOrder = 9999; BlackScreenUI.IgnoreGuiInset = true; BlackScreenUI.Enabled = _G_V10.EnableBlackScreen
-local BlackFrame = Instance.new("Frame", BlackScreenUI)
-BlackFrame.Size = UDim2.new(1, 0, 1, 0); BlackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-local BlackText = Instance.new("TextLabel", BlackFrame)
-BlackText.Size = UDim2.new(1, 0, 1, 0); BlackText.BackgroundTransparency = 1; BlackText.Text = "ĐANG BẬT MÀN HÌNH ĐEN GIẢM LAG\n(Tắt trong Menu Tab Server)"
-BlackText.TextColor3 = Color3.fromRGB(255, 255, 255); BlackText.Font = Enum.Font.GothamBold; BlackText.TextSize = 20
-
--- ==========================================
--- GIAO DIỆN CHÍNH (YUI HUB V1) - HOẠT ẢNH CAPSULE
+-- GIAO DIỆN CHÍNH (YUI HUB V1) - CAPSULE ANIMATION
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
 ScreenGui.Name = "YuiHub_UI"; ScreenGui.ResetOnSpawn = false
 
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 620, 0, 50)
-MainFrame.Position = UDim2.new(0.5, -310, 0.5, -25)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MainFrame.BackgroundTransparency = 0.1
-MainFrame.Active = true; MainFrame.Draggable = true
-MainFrame.ClipsDescendants = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 25)
-Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 100, 200)
-
+-- Nút Bông Hoa (Trạng thái ẩn)
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50); ToggleBtn.Position = UDim2.new(0, 15, 0.5, -25)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20); ToggleBtn.BackgroundTransparency = 0.2
-ToggleBtn.Text = "🌸"; ToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 200); ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 25
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0.5, 0); Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(255, 100, 200)
-ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ToggleBtn.Text = "🌸"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 200); ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 25
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(255, 100, 200)
+
+-- Khung Menu Chính
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 50, 0, 50) -- Bắt đầu từ hình viên thuốc nhỏ
+MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.BackgroundTransparency = 0.1
+MainFrame.ClipsDescendants = true
+MainFrame.Visible = false
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 25) -- Bo tròn Capsule
+Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 100, 200)
 
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 50); TopBar.BackgroundColor3 = Color3.fromRGB(10, 10, 15); TopBar.BackgroundTransparency = 1
-local DragPad = Instance.new("TextButton", TopBar)
-DragPad.Size = UDim2.new(1, -150, 1, 0); DragPad.BackgroundTransparency = 1; DragPad.Text = ""
+TopBar.Visible = false
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 20, 0, 0); Title.BackgroundTransparency = 1
 Title.Text = "🌸 YuiHub V1 (Ultimate)"; Title.TextColor3 = Color3.fromRGB(255, 100, 200); Title.Font = Enum.Font.GothamBold; Title.TextSize = 18; Title.TextXAlignment = Enum.TextXAlignment.Left
 
+-- NÚT GHIM (PIN) CHỐNG TRÔI
 _G.IsPinned = false
 local PinBtn = Instance.new("TextButton", TopBar)
 PinBtn.Size = UDim2.new(0, 35, 0, 35); PinBtn.Position = UDim2.new(1, -120, 0, 7.5); PinBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-PinBtn.Text = "📌"; PinBtn.TextColor3 = Color3.fromRGB(255, 255, 255); PinBtn.Font = Enum.Font.GothamBold; PinBtn.TextSize = 18
+PinBtn.Text = "📌"; PinBtn.TextColor3 = Color3.fromRGB(255, 255, 255); PinBtn.Font = Enum.Font.GothamBold; PinBtn.TextSize = 16
 Instance.new("UICorner", PinBtn).CornerRadius = UDim.new(1, 0)
 PinBtn.MouseButton1Click:Connect(function()
-    _G.IsPinned = not _G.IsPinned; MainFrame.Draggable = not _G.IsPinned
+    _G.IsPinned = not _G.IsPinned
     PinBtn.BackgroundColor3 = _G.IsPinned and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(50, 50, 55)
     PinBtn.Text = _G.IsPinned and "📍" or "📌"
 end)
@@ -196,7 +187,6 @@ local CloseBtn = Instance.new("TextButton", TopBar)
 CloseBtn.Size = UDim2.new(0, 35, 0, 35); CloseBtn.Position = UDim2.new(1, -35, 0, 7.5); CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 CloseBtn.Text = "X"; CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255); CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.TextSize = 16
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
 local TabsFrame = Instance.new("ScrollingFrame", MainFrame)
 TabsFrame.Name = "TabsFrame"; TabsFrame.Size = UDim2.new(0.28, 0, 1, -50); TabsFrame.Position = UDim2.new(0, 0, 0, 50)
@@ -210,24 +200,74 @@ ContentFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ContentFrame.Backgro
 Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 15)
 ContentFrame.Visible = false
 
-task.spawn(function()
-    task.wait(0.5)
-    local tween = TweenService:Create(MainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 620, 0, 420), Position = UDim2.new(0.5, -310, 0.5, -210)
-    })
-    tween:Play()
-    tween.Completed:Connect(function() TabsFrame.Visible = true; ContentFrame.Visible = true end)
+-- ================= CƠ CHẾ KÉO MENU MƯỢT MÀ =================
+local dragging, dragInput, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not _G.IsPinned then
+        dragging = true; dragStart = input.Position; startPos = MainFrame.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+    end
+end)
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+end)
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging and not _G.IsPinned then
+        local delta = input.Position - dragStart
+        TweenService:Create(MainFrame, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}):Play()
+    end
+end)
+
+-- ================= HOẠT ẢNH CUỘN MỞ/ĐÓNG =================
+ToggleBtn.MouseButton1Click:Connect(function()
+    ToggleBtn.Visible = false
+    MainFrame.Size = UDim2.new(0, 50, 0, 50)
+    MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25)
+    MainFrame.Visible = true
+    
+    local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(0.5, -310, 0.5, -25)})
+    tw1:Play(); tw1.Completed:Wait()
+    TopBar.Visible = true
+    
+    local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 420), Position = UDim2.new(0.5, -310, 0.5, -210)})
+    tw2:Play(); tw2.Completed:Wait()
+    
+    TabsFrame.Visible = true; ContentFrame.Visible = true
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    TabsFrame.Visible = false; ContentFrame.Visible = false
+    
+    local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 0.5, -25)})
+    tw1:Play(); tw1.Completed:Wait()
+    TopBar.Visible = false
+    
+    local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 50, 0, 50), Position = UDim2.new(0.5, -25, 0.5, -25)})
+    tw2:Play(); tw2.Completed:Wait()
+    
+    MainFrame.Visible = false; ToggleBtn.Visible = true
 end)
 
 MinBtn.MouseButton1Click:Connect(function()
     local isMin = MainFrame.Size.Y.Offset == 50
     if not isMin then TabsFrame.Visible = false; ContentFrame.Visible = false end
-    local tw = TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+    local tw = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
         Size = isMin and UDim2.new(0, 620, 0, 420) or UDim2.new(0, 620, 0, 50),
-        Position = isMin and UDim2.new(0.5, -310, 0.5, -210) or UDim2.new(0.5, -310, 0.5, -25)
+        Position = isMin and UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 0.5, -210) or UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 0.5, -25)
     })
     tw:Play()
     if isMin then tw.Completed:Connect(function() TabsFrame.Visible = true; ContentFrame.Visible = true end) end
+end)
+
+-- Tự động bung bảng lần đầu
+task.spawn(function()
+    task.wait(1)
+    ToggleBtn.Visible = false; MainFrame.Visible = true
+    local tw1 = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 50), Position = UDim2.new(0.5, -310, 0.5, -25)})
+    tw1:Play(); tw1.Completed:Wait(); TopBar.Visible = true
+    local tw2 = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 620, 0, 420), Position = UDim2.new(0.5, -310, 0.5, -210)})
+    tw2:Play(); tw2.Completed:Wait()
+    TabsFrame.Visible = true; ContentFrame.Visible = true
 end)
 
 -- ==========================================
@@ -494,7 +534,7 @@ CreateToggleSwitch(TabSeaEvent, "Săn Sea Monster (Bay Vòng Tròn)", "HuntSeaMo
 CreateToggleSwitch(TabSeaEvent, "Săn Thuyền Ma (The Starving Ghost)", "HuntGhost")
 CreateToggleSwitch(TabSeaEvent, "Tự Động Ngồi Lái Thuyền", "AutoSitBoat")
 
--- --- TAB: RAID (BỔ SUNG CƠ CHẾ TUẦN TRA) ---
+-- --- TAB: RAID ---
 CreateDivider(TabRaid, "MUA RAID & JOIN GAME", Color3.fromRGB(255, 100, 100))
 CreateToggleSwitch(TabRaid, "Bật Tự Động Mua Raid / Re-Raid", "AutoBuyRaid")
 CreateSlider(TabRaid, "Delay Teleport Mua Raid (Giây)", 1, 10, "RaidBuyTeleportDelay")
@@ -505,6 +545,7 @@ CreateToggleSwitch(TabRaid, "Bật Auto Farm Quái Raid (Tự dọn dẹp map)",
 CreateDivider(TabRaid, "CƠ CHẾ DI CHUYỂN KHI HẾT QUÁI RAID", Color3.fromRGB(255, 150, 50))
 CreateDropdown(TabRaid, "Chờ ở Tọa độ 1 (Giây)", {"10", "20", "30"}, "RaidWaitC1", false)
 CreateDropdown(TabRaid, "Chờ ở Tọa độ 2 (Giây)", {"10", "20", "30"}, "RaidWaitC2", false)
+CreateDropdown(TabRaid, "Chờ ở Tọa độ 3 (Giây)", {"10", "20", "30"}, "RaidWaitC3", false)
 CreateDivider(TabRaid, "TELEPORT RAID CŨ", Color3.fromRGB(255, 100, 100))
 CreateToggleSwitch(TabRaid, "Teleport Đến Cửa Raid (Ngoài Map)", "AutoTeleEntrance")
 CreateSlider(TabRaid, "Delay Teleport Ra Cửa Ngoài Map (Giây)", 1, 10, "RaidEntranceDelay")
@@ -646,10 +687,14 @@ local function PhysicalClick(guiObj)
     task.wait(0.05); VIM:SendMouseButtonEvent(center.X, center.Y + inset.Y, 0, false, game, 0)
 end
 
--- FIX: Chạm góc trên cùng giữa lệch phải (An toàn tuyệt đối)
+-- FIX: Chạm góc chuẩn bên cạnh Hide GUI (X ~ 65% màn hình)
 local function TapSafeCorner()
-    VIM:SendMouseButtonEvent(400, 50, 0, true, game, 0)
-    task.wait(0.05); VIM:SendMouseButtonEvent(400, 50, 0, false, game, 0)
+    local cam = workspace.CurrentCamera
+    if cam then
+        local safeX = cam.ViewportSize.X * 0.65 
+        VIM:SendMouseButtonEvent(safeX, 45, 0, true, game, 0)
+        task.wait(0.05); VIM:SendMouseButtonEvent(safeX, 45, 0, false, game, 0)
+    end
 end
 
 local function SmartFindButton(gui, searchText)
@@ -733,7 +778,7 @@ task.spawn(function()
             if loadBtn then PhysicalClick(loadBtn) end
             if playBtn then PhysicalClick(playBtn) end
         end
-        TapSafeCorner() -- Góc 400, 50 không đụng UI
+        TapSafeCorner() -- Góc phải tránh Roblox Icon
     end
 end)
 
@@ -789,13 +834,13 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- ENGINE: MUA RAID & TUẦN TRA RAID (CƠ CHẾ PATROL MỚI)
+-- ENGINE: MUA RAID & TUẦN TRA RAID (PATROL AI C1-C2-C3)
 -- ==========================================
 local raidPatrolState = "Wait_C1"
 local raidPatrolTimer = os.clock()
-local C1 = CFrame.new(-77, 119, -258)
-local C2 = CFrame.new(-101, 114, 382)
-local C3 = CFrame.new(-124, 114, 404)
+local C1 = Vector3.new(-77, 119, -258)
+local C2 = Vector3.new(-101, 114, 382)
+local C3 = Vector3.new(-124, 114, 404)
 local lastRaidTeleport = os.clock()
 
 local function IsRaidClear()
@@ -805,11 +850,6 @@ local function IsRaidClear()
         if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then return false end
     end
     return true
-end
-
-local function DistanceTo(cframe, hrp)
-    if not hrp then return math.huge end
-    return (hrp.Position - cframe.Position).Magnitude
 end
 
 task.spawn(function()
@@ -825,22 +865,18 @@ task.spawn(function()
         local distToRaidMap = (hrp.Position - Vector3.new(-123, 114, 407)).Magnitude
         
         if distToRaidMap < 3000 then 
-            -- TRONG MAP RAID
             if _G_V10.AutoStartRaid then pcall(function() ReplicatedStorage.Assets.Remote.RemoteEvent.Starto:FireServer() end) end
             
             if _G_V10.AutoBuyRaid then
                 local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
                 if not talkingGui then
-                    -- Chỉ ép teleport khi KHÔNG bật AutoFarmRaid (Nếu bật FarmRaid, patrol sẽ tự dắt nó tới C3)
                     if not _G_V10.AutoFarmRaid then
                         local targetPos = Vector3.new(-123, 114, 407)
                         if (hrp.Position - targetPos).Magnitude > 20 then
-                            hrp.CFrame = CFrame.new(targetPos)
-                            task.wait(_G_V10.RaidBuyTeleportDelay)
+                            hrp.CFrame = CFrame.new(targetPos); task.wait(_G_V10.RaidBuyTeleportDelay)
                         end
                     end
                     local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
-                    -- Chỉ gọi nói chuyện nếu đã ở gần NPC (tránh lỗi xa map)
                     if npc and (hrp.Position - npc:GetPivot().Position).Magnitude < 30 then
                         task.spawn(function() pcall(function() ReplicatedStorage.Assets.Remote.RemoteFunction.Talking:InvokeServer(npc, npc, npc) end) end)
                     end
@@ -849,17 +885,13 @@ task.spawn(function()
                     if buyBtn then PhysicalClick(buyBtn) end
                 end
             end
-            
-            -- Không dùng AutoTeleReRaid cũ nữa, mà dùng hệ thống Patrol C1-C2-C3 bên trong vòng lặp Farm
         else
-            -- NGOÀI MAP RAID
             if _G_V10.AutoBuyRaid then
                 local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
                 if not talkingGui then
                     local targetPos = Vector3.new(-1371, 79, 3982)
                     if (hrp.Position - targetPos).Magnitude > 20 then
-                        hrp.CFrame = CFrame.new(targetPos)
-                        task.wait(_G_V10.RaidBuyTeleportDelay)
+                        hrp.CFrame = CFrame.new(targetPos); task.wait(_G_V10.RaidBuyTeleportDelay)
                     end
                     local npc = Workspace:FindFirstChild("NPC") and Workspace.NPC:FindFirstChild("Dazzl")
                     if npc and (hrp.Position - npc:GetPivot().Position).Magnitude < 30 then
@@ -1074,9 +1106,8 @@ task.spawn(function()
                 end
             end
 
-            -- NẾU TÌM THẤY QUÁI (RESET PATROL CỦA RAID)
+            -- NẾU CÓ QUÁI -> RESET PATROL VÀ ĐÁNH
             if targetMobInstance or (_G_V10.AutoSea and _G_V10.IsFightingSea) then
-                -- Đánh quái nên reset lại vị trí chờ C1
                 raidPatrolState = "Wait_C1"
                 raidPatrolTimer = os.clock()
                 
@@ -1123,30 +1154,20 @@ task.spawn(function()
                     HRP.CFrame = mobPos * offset
                 end
             else
-                -- NẾU KHÔNG CÓ QUÁI
+                -- KHÔNG CÓ QUÁI -> THỰC HIỆN TUẦN TRA (PATROL) C1-C2-C3
                 if _G_V10.AutoFarmRaid then
                     local distToRaidMap = (HRP.Position - Vector3.new(-123, 114, 407)).Magnitude
                     if distToRaidMap < 3000 then
-                        LblInfo.Text = "Raid: Đang tuần tra - " .. raidPatrolState
-                        
+                        LblInfo.Text = "Raid: Tuần tra " .. raidPatrolState
                         if raidPatrolState == "Wait_C1" then
-                            if DistanceTo(C1, HRP) > 10 then 
-                                HRP.CFrame = C1; raidPatrolTimer = os.clock()
-                            else
-                                if os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC1) then raidPatrolState = "Wait_C2" end
-                            end
+                            if (HRP.Position - C1).Magnitude > 10 then HRP.CFrame = CFrame.new(C1); raidPatrolTimer = os.clock()
+                            elseif os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC1) then raidPatrolState = "Wait_C2"; raidPatrolTimer = os.clock() end
                         elseif raidPatrolState == "Wait_C2" then
-                            if DistanceTo(C2, HRP) > 10 then 
-                                HRP.CFrame = C2; raidPatrolTimer = os.clock()
-                            else
-                                if os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC2) then raidPatrolState = "Wait_C3" end
-                            end
+                            if (HRP.Position - C2).Magnitude > 10 then HRP.CFrame = CFrame.new(C2); raidPatrolTimer = os.clock()
+                            elseif os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC2) then raidPatrolState = "Wait_C3"; raidPatrolTimer = os.clock() end
                         elseif raidPatrolState == "Wait_C3" then
-                            if DistanceTo(C3, HRP) > 10 then 
-                                HRP.CFrame = C3; raidPatrolTimer = os.clock()
-                            else
-                                if os.clock() - raidPatrolTimer >= 15 then raidPatrolState = "Wait_C2" end
-                            end
+                            if (HRP.Position - C3).Magnitude > 10 then HRP.CFrame = CFrame.new(C3); raidPatrolTimer = os.clock()
+                            elseif os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC3) then raidPatrolState = "Wait_C2"; raidPatrolTimer = os.clock() end
                         end
                     end
                 end
