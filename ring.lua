@@ -1,6 +1,6 @@
 -- ==========================================
--- 🌸 YUIHUB V1 - THE ULTIMATE SCRIPT
--- (CENTER CAPSULE ANIMATION, PERSISTENT TOGGLE, SAFE EDGE TAP, RAID PATROL, LƯU SCAN VĨNH VIỄN)
+-- 🌸 YUIHUB - THE ULTIMATE SCRIPT
+-- (GIỮ NÚT HOA BẤT TỬ, FIX TỌA ĐỘ CLICK BÊN PHẢI HIDE GUI, GIỮ NGUYÊN MỌI CHỨC NĂNG)
 -- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -134,12 +134,12 @@ local function GetConfigsList()
 end
 
 -- ==========================================
--- GIAO DIỆN CHÍNH (YUI HUB V1) - BẤT TỬ TOGGLE & CENTER ANIMATION
+-- GIAO DIỆN CHÍNH (YUI HUB) - NÚT BẤT TỬ & HOẠT ẢNH
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui", SafeParent)
 ScreenGui.Name = "YuiHub_UI"; ScreenGui.ResetOnSpawn = false
 
--- NÚT BÔNG HOA BẤT TỬ (LUÔN HIỆN)
+-- NÚT BÔNG HOA BẤT TỬ (KHÔNG BAO GIỜ ẨN)
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50); ToggleBtn.Position = UDim2.new(0, 15, 0.5, -25)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25); ToggleBtn.Text = "🌸"
@@ -149,13 +149,13 @@ Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(255, 100, 200)
 
 -- KHUNG MENU CHÍNH
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 50, 0, 50) -- Khởi đầu = Hình viên thuốc nhỏ ở giữa màn hình
+MainFrame.Size = UDim2.new(0, 50, 0, 50) 
 MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.1
 MainFrame.ClipsDescendants = true
 MainFrame.Visible = false
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 25) -- Bo tròn Capsule
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 25) 
 Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 100, 200)
 
 local TopBar = Instance.new("Frame", MainFrame)
@@ -166,16 +166,18 @@ DragPad.Size = UDim2.new(1, -150, 1, 0); DragPad.BackgroundTransparency = 1; Dra
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 20, 0, 0); Title.BackgroundTransparency = 1
-Title.Text = "🌸 YuiHub V1 (Ultimate)"; Title.TextColor3 = Color3.fromRGB(255, 100, 200); Title.Font = Enum.Font.GothamBold; Title.TextSize = 18; Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.RichText = true
+Title.Text = "🌸 YuiHub <font size='12' color='#aaaaaa'><i>- Chào mừng đến với hub của tôi</i></font>"
+Title.TextColor3 = Color3.fromRGB(255, 100, 200); Title.Font = Enum.Font.GothamBold; Title.TextSize = 18; Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- NÚT GHIM (PIN)
+-- NÚT GHIM (PIN) CHỐNG TRÔI
 _G.IsPinned = false
 local PinBtn = Instance.new("TextButton", TopBar)
 PinBtn.Size = UDim2.new(0, 35, 0, 35); PinBtn.Position = UDim2.new(1, -120, 0, 7.5); PinBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
 PinBtn.Text = "📌"; PinBtn.TextColor3 = Color3.fromRGB(255, 255, 255); PinBtn.Font = Enum.Font.GothamBold; PinBtn.TextSize = 18
 Instance.new("UICorner", PinBtn).CornerRadius = UDim.new(1, 0)
 PinBtn.MouseButton1Click:Connect(function()
-    _G.IsPinned = not _G.IsPinned; MainFrame.Draggable = not _G.IsPinned
+    _G.IsPinned = not _G.IsPinned
     PinBtn.BackgroundColor3 = _G.IsPinned and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(50, 50, 55)
     PinBtn.Text = _G.IsPinned and "📍" or "📌"
 end)
@@ -229,6 +231,7 @@ local function CloseMenuAnimation()
     tw2:Play(); tw2.Completed:Wait(); MainFrame.Visible = false
 end
 
+-- FIX NÚT HOA BẤT TỬ: Bấm là mở, đang mở bấm là đóng
 ToggleBtn.MouseButton1Click:Connect(function()
     if MainFrame.Visible then
         CloseMenuAnimation()
@@ -255,7 +258,6 @@ MinBtn.MouseButton1Click:Connect(function()
     if isMin then tw.Completed:Connect(function() TabsFrame.Visible = true; ContentFrame.Visible = true end) end
 end)
 
--- Tự động bung bảng lần đầu khi chạy
 task.spawn(function()
     task.wait(1)
     MainFrame.Size = UDim2.new(0, 50, 0, 50); MainFrame.Position = UDim2.new(0.5, -25, 0.5, -25); MainFrame.Visible = true
@@ -648,7 +650,7 @@ CreateButton(TabServer, "🚀 Boost FPS (Xóa Đồ Họa Mượt Game)", functi
 end)
 CreateToggleSwitch(TabServer, "Màn Hình Đen (Giảm Lag Treo Máy)", "EnableBlackScreen")
 
--- --- TAB: MÁY QUÉT (NOTE & SCAN) BẢN MỚI ---
+-- --- TAB: MÁY QUÉT (NOTE & SCAN) ---
 CreateDivider(TabScanner, "HỆ THỐNG MÁY QUÉT TOÀN MAP", Color3.fromRGB(200, 100, 255))
 CreateToggleSwitch(TabScanner, "Bật Máy Quét Map Thông Minh", "AutoScanMap")
 
@@ -683,10 +685,15 @@ local function PhysicalClick(guiObj)
     task.wait(0.05); VIM:SendMouseButtonEvent(center.X, center.Y + inset.Y, 0, false, game, 0)
 end
 
--- 🚀 [FIX KHẨN CẤP]: Chạm mép trên cùng X=150, Y=20. Tuyệt đối xa Logo Roblox và chữ EXIT!
-local function TapSafeCorner()
-    VIM:SendMouseButtonEvent(150, 20, 0, true, game, 0)
-    task.wait(0.05); VIM:SendMouseButtonEvent(150, 20, 0, false, game, 0)
+-- 🚀 [FIX KHẨN CẤP THEO ẢNH]: Bấm ở vị trí an toàn tuyệt đối (75% chiều ngang màn hình, trên cùng)
+-- Hoàn toàn xa cách nút "Hide GUI" và nút "EXIT"
+local function TapRightOfHideGUI()
+    local cam = workspace.CurrentCamera
+    if cam then
+        local targetX = cam.ViewportSize.X * 0.75
+        VIM:SendMouseButtonEvent(targetX, 20, 0, true, game, 0)
+        task.wait(0.05); VIM:SendMouseButtonEvent(targetX, 20, 0, false, game, 0)
+    end
 end
 
 local function SmartFindButton(gui, searchText)
@@ -770,7 +777,7 @@ task.spawn(function()
             if loadBtn then PhysicalClick(loadBtn) end
             if playBtn then PhysicalClick(playBtn) end
         end
-        TapSafeCorner() -- Gõ mép an toàn X=150, Y=20
+        TapRightOfHideGUI() -- Chỉ nháy ở góc phải trên an toàn
     end
 end)
 
@@ -781,7 +788,7 @@ task.spawn(function()
     while task.wait(0.2) do
         if _G_V10.AutoSpawnMihawk or _G_V10.AutoGiveShadow or _G_V10.AutoBuyRaid then
             local talkingGui = LocalPlayer.PlayerGui:FindFirstChild("Talking")
-            if talkingGui then TapSafeCorner() end
+            if talkingGui then TapRightOfHideGUI() end
         end
     end
 end)
@@ -1047,14 +1054,14 @@ task.spawn(function()
 
         _G_V10.CurrentTargetMob = nil
         if _G_V10.AutoFarmLevel then
-            local mob, qName = GetMobForCurrentLevel(); _G_V10.CurrentTargetMob = {mob}; Title.Text = "🌸 YuiHub V1 (Farm: " .. qName .. ")"
+            local mob, qName = GetMobForCurrentLevel(); _G_V10.CurrentTargetMob = {mob}; Title.Text = "🌸 YuiHub (Farm: " .. qName .. ")"
         elseif _G_V10.ManualQuestFarm and _G_V10.SelectedManualQuest then
-            for _, v in pairs(QuestDB) do if v.QuestName == _G_V10.SelectedManualQuest then _G_V10.CurrentTargetMob = {v.MobName}; Title.Text = "🌸 YuiHub V1 (Farm: " .. v.QuestName .. ")" end end
+            for _, v in pairs(QuestDB) do if v.QuestName == _G_V10.SelectedManualQuest then _G_V10.CurrentTargetMob = {v.MobName}; Title.Text = "🌸 YuiHub (Farm: " .. v.QuestName .. ")" end end
         elseif _G_V10.AutoFarmFree and type(_G_V10.SelectedMonsters) == "table" and #_G_V10.SelectedMonsters > 0 then
-            _G_V10.CurrentTargetMob = _G_V10.SelectedMonsters; Title.Text = "🌸 YuiHub V1 (Đang Farm Tự Do)"
-        elseif _G_V10.FarmAll then Title.Text = "🌸 YuiHub V1 (Đang Càn Quét)"
-        elseif _G_V10.AutoFarmRaid then Title.Text = "🌸 YuiHub V1 (Đang Dọn Raid)"
-        else Title.Text = "🌸 YuiHub V1 (Ultimate)" end
+            _G_V10.CurrentTargetMob = _G_V10.SelectedMonsters; Title.Text = "🌸 YuiHub (Đang Farm Tự Do)"
+        elseif _G_V10.FarmAll then Title.Text = "🌸 YuiHub (Đang Càn Quét)"
+        elseif _G_V10.AutoFarmRaid then Title.Text = "🌸 YuiHub (Đang Dọn Raid)"
+        else Title.Text = "🌸 YuiHub <font size='12' color='#aaaaaa'><i>- Chào mừng đến với hub của tôi</i></font>" end
 
         if _G_V10.AutoRepeatQuest then RepeatQuestRemote() end
 
@@ -1150,7 +1157,7 @@ task.spawn(function()
                 if _G_V10.AutoFarmRaid then
                     local distToRaidMap = (HRP.Position - Vector3.new(-123, 114, 407)).Magnitude
                     if distToRaidMap < 3000 then
-                        Title.Text = "🌸 YuiHub V1 (Tuần tra: " .. raidPatrolState .. ")"
+                        Title.Text = "🌸 YuiHub (Tuần tra: " .. raidPatrolState .. ")"
                         if raidPatrolState == "Wait_C1" then
                             if (HRP.Position - C1.Position).Magnitude > 10 then HRP.CFrame = C1; raidPatrolTimer = os.clock()
                             elseif os.clock() - raidPatrolTimer >= tonumber(_G_V10.RaidWaitC1) then raidPatrolState = "Wait_C2"; raidPatrolTimer = os.clock() end
